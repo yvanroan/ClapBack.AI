@@ -1,0 +1,9 @@
+obviously deepseek can't do anything that is related to sexual banter and stuffs with huge insult even if its just for fun.
+but it was pretty good at reasoning and putting conversations into blocks 
+
+geminin doesnt group thing very well it was kinda dumb maybe cuz i am using the free version, but it processed everything properly.
+
+add success level as a metadata to the data stored in the vector db.
+
+commentary should be optional to only text. would be hard to implement in voice mode.
+except if an other voice does the commentary

@@ -1,0 +1,38 @@
+# Operating System Files
+**/.DS_Store
+
+# VS Code settings directory
+.vscode/
+
+
+#frontend
+frontend/.bolt
+frontend/node_modules
+
+frontend/.pnp
+frontend/.pnp.js
+
+# testing
+frontend/coverage
+
+# next.js
+frontend/.next/
+frontend/out/
+
+
+
+# Environments
+backend/.env
+.venv/
+frontend/next-env.d.ts
+
+# Byte-compiled / optimized / DLL files
+backend/__pycache__/
+
+
+# Specific to this project
+backend/chroma_db/* 
+backend/downloads/* 
+backend/prompts.py
+backend/links.txt
+backend/archetypes.json
