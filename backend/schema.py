@@ -30,8 +30,8 @@ class AssessmentResponse(BaseModel):
     # Define the expected structure of the assessment JSON
     primary_archetype: Optional[str] = None
     secondary_archetype: Optional[str] = None
-    strengths: Optional[list[str]] = None # Changed to list based on prompt example
-    weaknesses: Optional[list[str]] = None # Changed to list based on prompt example
+    strengths: Optional[str] = None # Changed to list based on prompt example
+    weaknesses: Optional[str] = None # Changed to list based on prompt example
     justification: Optional[str] = None
     highlights: Optional[list[str]] = None
     cringe_moments: Optional[list[str]] = None

@@ -405,6 +405,7 @@ async def get_conversation_assessment(scenario_id: str, request: Request):
         # 4. Parse and Validate the JSON response from the AI
         try:
             assessment_json = clean_gemini_output(generated_text) # Use cleaner if needed
+            assessment_json["raw_text_response"] = ""
             assessment_result = AssessmentResponse(**assessment_json)
             print(f"Successfully parsed and validated assessment for {scenario_id}")
             

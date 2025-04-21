@@ -57,6 +57,7 @@ interface ChatInterfaceProps {
   scenarioId: string | null;
   onMessageLimit: () => void;
   isLoading: boolean;
+  onMessagesUpdate?: (messages: ChatMessage[]) => void;
 }
 
 // Define the API endpoint URL using environment variables with a fallback
@@ -66,7 +67,8 @@ export function ChatInterface({
   scenarioData, 
   scenarioId,
   onMessageLimit,
-  isLoading 
+  isLoading,
+  onMessagesUpdate 
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -79,6 +81,12 @@ export function ChatInterface({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (onMessagesUpdate) {
+      onMessagesUpdate(messages);
+    }
+  }, [messages, onMessagesUpdate]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

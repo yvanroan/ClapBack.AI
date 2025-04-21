@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ChatInterface } from '@/components/chat-interface';
 import { AssessmentResult } from '@/components/assessment-result';
 import { Button } from '@/components/ui/button';
-import { ScenarioData } from '@/lib/types';
+import { ScenarioData, ChatMessage } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -24,6 +24,7 @@ export default function ChatPage() {
   const [showAssessment, setShowAssessment] = useState(false);
   const [assessmentData, setAssessmentData] = useState(null);
   const [isAssessmentLoading, setIsAssessmentLoading] = useState(false); // Loading state for assessment fetch
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   // Effect to fetch Scenario Data based on ID from URL
   useEffect(() => {
@@ -97,20 +98,39 @@ export default function ChatPage() {
         throw new Error(`API Error (${response.status}): ${errorDetail}`);
       }
       
-      const assessmentResult = await response.json();
+      // Safely parse the JSON response
+      let assessmentResult;
+      try {
+        const responseText = await response.text();
+        // Try to parse the response, handle any syntax errors
+        try {
+          assessmentResult = JSON.parse(responseText);
+        } catch (parseError: any) {
+          console.error("JSON parse error:", parseError);
+          console.log("Raw response:", responseText);
+          // Attempt to clean the response if it has extra characters
+          const cleanedText = responseText.replace(/[^\x20-\x7E]/g, '');
+          try {
+            assessmentResult = JSON.parse(cleanedText);
+          } catch (secondParseError) {
+            throw new Error(`Invalid JSON response: ${parseError.message}`);
+          }
+        }
+      } catch (error) {
+        console.error("Error processing response:", error);
+        throw new Error("Failed to process assessment response");
+      }
+      
       console.log("Assessment received:", assessmentResult);
 
       // Check if the response contains the raw text fallback
-      if (assessmentResult.raw_text_response) {
+      if (assessmentResult.raw_text_response && assessmentResult.raw_text_response !== "") {
            toast({
             title: "Assessment Parsing Issue",
             description: "The AI's assessment wasn't perfectly formatted, showing raw results.",
             variant: "default",
           });
           console.log("Raw AI assessment text response:", assessmentResult.raw_text_response);
-          // Decide how to handle - maybe display raw text or a simplified view
-          // For now, we'll still try to display it using AssessmentResult component
-          // which should ideally handle potentially missing fields gracefully.
       } 
       // Or if assessment is completely empty/invalid
       else if (!assessmentResult || Object.keys(assessmentResult).length === 0) { 
@@ -170,6 +190,8 @@ export default function ChatPage() {
         <AssessmentResult 
           assessmentData={assessmentData} 
           onRetry={handleRetry} // Pass retry handler
+          messages={messages} // Pass conversation messages to assessment result
+          scenarioData={scenarioData} // Pass scenario data for context
         />
       ) : (
         <ChatInterface 
@@ -177,6 +199,7 @@ export default function ChatPage() {
           scenarioId={scenarioId}
           onMessageLimit={handleMessageLimit}
           isLoading={isAssessmentLoading} 
+          onMessagesUpdate={setMessages}
         />
       )}
     </div>
