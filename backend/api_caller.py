@@ -3,13 +3,18 @@ import json
 import os
 import time # Added import
 from prompts import main_convo_prompt 
+from typing import Any
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request, HTTPException
 
 # Assuming vector_store.py is in the same directory or accessible
 from vector_store import (
     retrieve_relevant_examples, 
     initialize_chroma_client, 
-    initialize_embedding_model,
-    get_or_create_collection
+    get_or_create_collection,
+    initialize_embedding_model, # Keep if needed elsewhere, but not called in func
+    EMBEDDING_MODEL_NAME, 
+    COLLECTION_NAME 
 )
 
 
@@ -17,7 +22,7 @@ from vector_store import (
 API_ENDPOINT = "http://localhost:8000/chat" # Assuming FastAPI runs on port 8000
 NUM_TURNS = 7
 OUTPUT_DIR = "downloads"
-# --- Conversation Simulation Function ---
+
 def run_conversation_simulation(scenario: dict):
     """
     Runs a 10-turn conversation simulation based on the provided scenario.
@@ -88,14 +93,16 @@ def run_conversation_simulation(scenario: dict):
             formatted_history = "\n".join([f"{turn.get('role', 'unknown')}: {turn.get('content', '')}" for turn in conversation_history])
             # Format retrieved examples
             formatted_examples = json.dumps(examples_for_prompt, indent=2)
-
+            roast_level = scenario.get('roast_level', 'N/A')
+            system_archetype = scenario.get('system_archetype', 'N/A')
+            roast_level_profile = roast_scale[system_archetype][roast_level]
             # Create the dictionary expected by main_convo_prompt
             information = {
                 'scenario_type': scenario.get('type', 'N/A'),
                 'scenario_setting': scenario.get('setting', 'N/A'),
                 'scenario_goal': scenario.get('goal', 'N/A'),
-                'system_archetype': scenario.get('system_archetype', 'N/A'),
-                'roast_level': scenario.get('roast_level', 'N/A'),
+                'system_archetype': system_archetype,
+                'roast_level': roast_level_profile,
                 'player_sex': scenario.get('player_sex', 'N/A'),
                 'system_sex': scenario.get('system_sex', 'N/A'),
                 'conversation_history': formatted_history,
@@ -158,6 +165,8 @@ def run_conversation_simulation(scenario: dict):
 
     print("\n--- Conversation Simulation Finished --- ")
     return conversation_history
+
+
 
 # --- Example Usage (for testing) ---
 if __name__ == "__main__":

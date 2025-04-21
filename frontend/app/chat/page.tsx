@@ -7,102 +7,176 @@ import { AssessmentResult } from '@/components/assessment-result';
 import { Button } from '@/components/ui/button';
 import { ScenarioData } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+
+// Define the API endpoint URL using environment variables with a fallback
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export default function ChatPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
+  
+  // State Management
+  const [scenarioId, setScenarioId] = useState<string | null>(null);
   const [scenarioData, setScenarioData] = useState<ScenarioData | null>(null);
+  const [isScenarioLoading, setIsScenarioLoading] = useState(true); // Loading state for initial scenario fetch
   const [showAssessment, setShowAssessment] = useState(false);
   const [assessmentData, setAssessmentData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isAssessmentLoading, setIsAssessmentLoading] = useState(false); // Loading state for assessment fetch
 
+  // Effect to fetch Scenario Data based on ID from URL
   useEffect(() => {
-    try {
-      const data = JSON.parse(searchParams.get('data') || '');
-      if (!data) {
-        throw new Error('No scenario data found');
-      }
-      setScenarioData(data);
-    } catch (error) {
+    const id = searchParams.get('id');
+    if (!id) {
       toast({
-        title: "Oops! Something's missing",
-        description: "We couldn't find your scenario data. Let's start over.",
+        title: "Missing Scenario ID",
+        description: "Could not find the scenario identifier. Redirecting home.",
         variant: "destructive",
       });
       router.push('/');
+      return;
     }
-  }, [searchParams, router, toast]);
+    setScenarioId(id);
 
+    const fetchScenario = async () => {
+      setIsScenarioLoading(true);
+      try {
+        console.log(`Fetching scenario data for ID: ${id}`);
+        const response = await fetch(`${API_BASE_URL}/api/v1/scenario/${id}`);
+        if (!response.ok) {
+           let errorDetail = "Scenario details not found or invalid.";
+            try {
+              const errorData = await response.json();
+              errorDetail = errorData.detail || errorDetail;
+            } catch (e) { errorDetail = await response.text();} 
+          throw new Error(`API Error (${response.status}): ${errorDetail}`);
+        }
+        const data: ScenarioData = await response.json();
+        setScenarioData(data);
+        console.log("Scenario data loaded:", data);
+      } catch (error) {
+        console.error('Error fetching scenario data:', error);
+        toast({
+          title: "Failed to Load Scenario",
+          description: error instanceof Error ? error.message : "Could not load the conversation details.",
+          variant: "destructive",
+        });
+        router.push('/'); // Redirect home on failure
+      } finally {
+        setIsScenarioLoading(false);
+      }
+    };
+
+    fetchScenario();
+
+  }, [searchParams, router, toast]); // Dependencies
+
+  // MODIFIED: handleMessageLimit to fetch real assessment
   const handleMessageLimit = async () => {
-    setIsLoading(true);
+    if (!scenarioId) {
+        toast({ title: "Error", description: "Scenario ID is missing.", variant: "destructive"});
+        return;
+    }
+    
+    setIsAssessmentLoading(true); // Use specific loading state
+    console.log(`Requesting assessment for scenario ID: ${scenarioId}`);
     try {
-      // Mock API call for assessment
-      // In a real app, this would be:
-      const response = await fetch('/api/v1/conversation/assessment', {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/api/v1/conversation/${scenarioId}/assess`, {
+        method: 'POST', // POST request to trigger assessment
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId: scenarioData.id }),
+        // No body needed if ID is in the URL
       });
-      const data = await response.json();
       
-      // Mock data for demo
-      // const mockAssessment = {
-      //   overall_score: 85,
-      //   feedback: "You've got some serious rizz! Your conversation game is strong, but there's always room to level up. You're great at keeping things flowing, but sometimes you might come on a bit too strong.",
-      //   strengths: ["Great opening lines", "Smooth topic transitions", "Good humor integration"],
-      //   areas_to_improve: ["Listen more actively", "Ask more open-ended questions"],
-      //   stats: {
-      //     engagement: 78,
-      //     empathy: 82,
-      //     humor: 90,
-      //     authenticity: 85,
-      //     confidence: 88
-      //   }
-      // };
+      if (!response.ok) {
+          let errorDetail = "Failed to get assessment.";
+          try {
+            const errorData = await response.json();
+            errorDetail = errorData.detail || errorDetail;
+          } catch (e) { errorDetail = await response.text();} 
+        throw new Error(`API Error (${response.status}): ${errorDetail}`);
+      }
       
-      setTimeout(() => {
-        setAssessmentData(mockAssessment);
-        setShowAssessment(true);
-        setIsLoading(false);
-      }, 1500);
+      const assessmentResult = await response.json();
+      console.log("Assessment received:", assessmentResult);
+
+      // Check if the response contains the raw text fallback
+      if (assessmentResult.raw_text_response) {
+           toast({
+            title: "Assessment Parsing Issue",
+            description: "The AI's assessment wasn't perfectly formatted, showing raw results.",
+            variant: "default",
+          });
+          console.log("Raw AI assessment text response:", assessmentResult.raw_text_response);
+          // Decide how to handle - maybe display raw text or a simplified view
+          // For now, we'll still try to display it using AssessmentResult component
+          // which should ideally handle potentially missing fields gracefully.
+      } 
+      // Or if assessment is completely empty/invalid
+      else if (!assessmentResult || Object.keys(assessmentResult).length === 0) { 
+          throw new Error("Received empty or invalid assessment data.");
+      }
+
+      setAssessmentData(assessmentResult); 
+      setShowAssessment(true);
+
     } catch (error) {
+       console.error("Error fetching assessment:", error);
       toast({
         title: "Assessment Failed",
-        description: "We couldn't analyze your conversation. Try again later!",
+        description: error instanceof Error ? error.message : "We couldn't analyze your conversation. Try again later!",
         variant: "destructive",
       });
-      setIsLoading(false);
+      // Keep the user on the chat page or provide a retry option? 
+      // For now, just show the error.
+    } finally {
+      setIsAssessmentLoading(false); // Use specific loading state
     }
   };
 
   const handleRetry = () => {
-    router.push('/scenario');
+    // Navigate back to the scenario setup page
+    router.push('/scenario'); 
   };
 
+  // Loading state for initial scenario fetch
+  if (isScenarioLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 flex items-center justify-center">
+        <div className="text-center p-6">
+          <Loader2 className="h-12 w-12 text-white animate-spin mx-auto mb-4" />
+          <h1 className="text-xl font-semibold text-white/80">Loading Scenario...</h1>
+        </div>
+      </div>
+    );
+  }
+  
+  // If scenario data failed to load after trying (should be caught by useEffect redirect, but good fallback)
   if (!scenarioData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 flex items-center justify-center">
         <div className="text-center p-6 bg-black/30 backdrop-blur-lg rounded-xl">
-          <h1 className="text-2xl font-bold mb-4">Loading your convo...</h1>
-          <Button onClick={() => router.push('/')}>Back to Home</Button>
+          <h1 className="text-2xl font-bold mb-4 text-red-400">Failed to Load Scenario</h1>
+          <Button onClick={() => router.push('/')} variant="secondary">Back to Home</Button>
         </div>
       </div>
     );
   }
 
+  // Main component rendering logic
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 relative overflow-hidden">
       {showAssessment ? (
         <AssessmentResult 
           assessmentData={assessmentData} 
-          onRetry={handleRetry}
+          onRetry={handleRetry} // Pass retry handler
         />
       ) : (
         <ChatInterface 
           scenarioData={scenarioData} 
+          scenarioId={scenarioId}
           onMessageLimit={handleMessageLimit}
-          isLoading={isLoading}
+          isLoading={isAssessmentLoading} 
         />
       )}
     </div>

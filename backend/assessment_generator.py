@@ -5,8 +5,7 @@ from cleaner import clean_gemini_output
 # Assuming prompts.py is in the same directory or accessible
 from prompts import assessment_prompt 
 
-# --- Configuration ---
-# Use the /generate endpoint as it's more suited for structured JSON output
+
 API_ENDPOINT = "http://localhost:8000/chat" 
 ARCHETYPES_FILE = "archetypes.json"
 
@@ -125,7 +124,7 @@ def generate_conversation_assessment(conversation_history: list):
         return None
 
     # 6. Return the parsed assessment dictionary
-    return assessment_json
+    return clean_gemini_output(assessment_json)
 
 # --- Example Usage (for testing) ---
 if __name__ == "__main__":
@@ -136,8 +135,6 @@ if __name__ == "__main__":
     if assessment_result:
         print("\n--- Assessment Generation Successful ---")
         print("Received Assessment:")
-        print(json.dumps(assessment_result, indent=2))
-        cleaned_assessment = clean_gemini_output(assessment_result)
         # Optionally save this assessment to another file
         try:
             output_path = "downloads/conversation_assessment.json"

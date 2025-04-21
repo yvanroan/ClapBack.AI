@@ -10,14 +10,39 @@ import { motion } from '@/lib/motion';
 import { ScenarioData } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ChatMessage } from '@/lib/types';
+import Link from 'next/link';
 
-// Generate a random avatar for the AI character
-const avatarOptions = [
-  'https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-  'https://images.pexels.com/photos/2726111/pexels-photo-2726111.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-  'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-  'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-];
+// Import archetype images
+import IcyOneMale from './assets/icy_one_2_male.png';
+import IcyOneFemale from './assets/icy_one_2_female.png';
+import ChaoticExtrovertMale from './assets/chaotic_extrovert_male.png';
+import ChaoticExtrovertFemale from './assets/chaotic_extrovert_female.png';
+import PhilosopherMale from './assets/philosopher_situationship_male.png';
+import PhilosopherFemale from './assets/philosopher_situationship_female.png';
+import CertifiedBaddieMale from './assets/certified_baddie_males.png';
+import CertifiedBaddieFemale from './assets/certified_baddie_female.png';
+import AwkwardSweetheartMale from './assets/awkward_sweetheart_male.png';
+import AwkwardSweetheartFemale from './assets/awkward_sweetheart_female.png';
+
+// Function to get the appropriate avatar based on archetype and sex
+const getAvatarForArchetype = (archetype: string, sex: string) => {
+  const archetypeKey = archetype.toLowerCase().split(',')[0].trim();
+  
+  if (archetypeKey.includes('icy')) {
+    return sex.toLowerCase() === 'male' ? IcyOneMale.src : IcyOneFemale.src;
+  } else if (archetypeKey.includes('chaotic')) {
+    return sex.toLowerCase() === 'male' ? ChaoticExtrovertMale.src : ChaoticExtrovertFemale.src;
+  } else if (archetypeKey.includes('philosopher')) {
+    return sex.toLowerCase() === 'male' ? PhilosopherMale.src : PhilosopherFemale.src;
+  } else if (archetypeKey.includes('baddie')) {
+    return sex.toLowerCase() === 'male' ? CertifiedBaddieMale.src : CertifiedBaddieFemale.src;
+  } else if (archetypeKey.includes('awkward')) {
+    return sex.toLowerCase() === 'male' ? AwkwardSweetheartMale.src : AwkwardSweetheartFemale.src;
+  }
+  
+  // Default fallback
+  return sex.toLowerCase() === 'male' ? AwkwardSweetheartMale.src : AwkwardSweetheartFemale.src;
+};
 
 const getInitials = (name: string) => {
   return name
@@ -29,112 +54,51 @@ const getInitials = (name: string) => {
 
 interface ChatInterfaceProps {
   scenarioData: ScenarioData;
+  scenarioId: string | null;
   onMessageLimit: () => void;
   isLoading: boolean;
 }
 
+// Define the API endpoint URL using environment variables with a fallback
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 export function ChatInterface({ 
   scenarioData, 
+  scenarioId,
   onMessageLimit,
   isLoading 
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const aiAvatar = avatarOptions[Math.floor(Math.random() * avatarOptions.length)];
-
-  // Generate character name from archetype
-  const characterName = scenarioData.system_archetype
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  const characterName = scenarioData.system_archetype.split(',')[0];
+  const avatarSrc = getAvatarForArchetype(scenarioData.system_archetype, scenarioData.system_sex);
 
   useEffect(() => {
-    // Generate first message based on scenario
-    const generateFirstMessage = () => {
-      setIsTyping(true);
-      
-      // Examples based on conversation type
-      const firstMessages: Record<string, string[]> = {
-        dating: [
-          "Hey there! I noticed you from across the room. What brings you here tonight?",
-          "Hi! I don't think we've met before. I'm loving the vibe here, aren't you?",
-          "Well hello! Mind if I join you? This place is packed tonight."
-        ],
-        interview: [
-          "Thanks for coming in today. I've looked over your resume, and I'm impressed. Tell me more about yourself.",
-          "Welcome! We're excited to learn more about you today. What made you interested in this position?",
-          "Good to meet you! Let's start by discussing your background and why you think you're a good fit for our team."
-        ],
-        negotiation: [
-          "I've reviewed your proposal. There are some points I'd like to discuss further.",
-          "Thanks for meeting with me today. I'm interested in hearing more about your terms.",
-          "I'm glad we could set up this meeting. I have some thoughts on how we can make this work for both of us."
-        ],
-        friendship: [
-          "Hey, I'm new to the area. Any cool spots you recommend checking out?",
-          "So how do you know everyone here? I came with my roommate but they disappeared!",
-          "This class/event is something else, huh? Have you been to one before?"
-        ],
-        networking: [
-          "I noticed you work in the same industry. What's your role exactly?",
-          "Great to meet someone new at this event! What brings you here today?",
-          "I'm always interested in connecting with people in this field. What's your background?"
-        ]
-      };
-
-      // Default messages if type not found
-      const defaultMessages = [
-        "Hey there! Nice to meet you. How are you doing?",
-        "Hi! I'm glad we have a chance to chat. What's on your mind?",
-        "Hello! Great to connect with you. What should we talk about?"
-      ];
-
-      // Choose a random message from the appropriate category or default
-      const messageOptions = firstMessages[scenarioData.type] || defaultMessages;
-      const selectedMessage = messageOptions[Math.floor(Math.random() * messageOptions.length)];
-      
-      // Simulate typing delay
-      setTimeout(() => {
-        setMessages([
-          {
-            id: Date.now().toString(),
-            text: selectedMessage,
-            sender: 'system',
-            timestamp: new Date().toISOString()
-          }
-        ]);
-        setIsTyping(false);
-      }, 1500);
-    };
-
-    generateFirstMessage();
-    // Focus input after first message appears
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, 2000);
-  }, [scenarioData.type]);
-
-  useEffect(() => {
-    // Scroll to bottom when new messages arrive
     scrollToBottom();
-  }, [messages, isTyping]);
+  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isLoading || !scenarioId) {
+      if (!scenarioId) {
+        console.error("Attempted to send message but scenarioId prop is missing.");
+        toast({
+          title: "Missing scenario ID",
+          description: "Could not send message. Please try again later.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
     
-    // Check if we've reached the message limit (9 messages from user = 10 total exchanges)
-    const userMessages = messages.filter(m => m.sender === 'user');
-    if (userMessages.length >= 9) {
+    const currentUserMessageCount = messages.filter(m => m.sender === 'user').length;
+    if (currentUserMessageCount >= 5) {
       toast({
         title: "Message limit reached",
         description: "We're analyzing your conversation now...",
@@ -150,62 +114,69 @@ export function ChatInterface({
       timestamp: new Date().toISOString()
     };
 
-    // Add user message
-    setMessages(prev => [...prev, newMessage]);
+    const currentInput = inputValue;
+    
+    setMessages(prev => [...prev, newMessage]); 
     setInputValue('');
 
-    // In a real app, this would be:
-    // try {
-    //   const response = await fetch('/api/v1/conversation/message', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({
-    //       conversationId: scenarioData.id,
-    //       message: inputValue
-    //     }),
-    //   });
-    //   const data = await response.json();
-    //   // Process AI response
-    // } catch (error) {
-    //   console.error('Error sending message:', error);
-    // }
-
-    // Mock AI response with typing indicator
-    setIsTyping(true);
-    
-    // Generate responses based on context - would be replaced by actual API call
-    setTimeout(() => {
-      const responseOptions = [
-        "That's interesting! Tell me more about that.",
-        "I see where you're coming from. What makes you feel that way?",
-        "Hmm, I haven't thought about it like that before. What else is on your mind?",
-        "I totally get what you're saying! What else do you enjoy?",
-        "That's cool! I'm actually into similar things. Have you always been interested in that?",
-        "Interesting perspective! I'd love to hear more about your thoughts on this.",
-        "I'm not sure I fully understand - could you explain a bit more?",
-        "That's a unique way of looking at things. What led you to that conclusion?",
-        "I really like how you expressed that! What else would you like to talk about?",
-        "That's quite the take! Do you usually approach conversations this way?"
-      ];
-      
-      const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        text: responseOptions[Math.floor(Math.random() * responseOptions.length)],
-        sender: 'system',
-        timestamp: new Date().toISOString()
+    try {
+      const payload = {
+          scenario_id: scenarioId,
+          user_input: currentInput
       };
-      
-      setMessages(prev => [...prev, aiMessage]);
-      setIsTyping(false);
-      
-      // If this was the 10th total message exchange, trigger the assessment
-      const updatedUserMessages = messages.filter(m => m.sender === 'user');
-      if (updatedUserMessages.length >= 9) {
-        setTimeout(() => {
-          onMessageLimit();
-        }, 1000);
+
+      console.log("Sending to /api/v1/process_chat:", payload);
+
+      const response = await fetch(`${API_BASE_URL}/api/v1/process_chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        let errorDetail = "Failed to get response from AI.";
+        try {
+          const errorData = await response.json();
+          errorDetail = errorData.detail || errorDetail;
+        } catch (e) {
+            errorDetail = await response.text();
+        }
+        throw new Error(`API Error (${response.status}): ${errorDetail}`);
       }
-    }, 1500);
+
+      const data = await response.json();
+
+      if (!data || !data.content){
+          throw new Error("Invalid response format from AI.");
+      }
+
+      // Add AI response to UI
+      const aiMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          text: data.content,
+          sender: 'system', // Use 'system' or 'assistant' for role
+          timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, aiMessage]);
+
+      // Check message limit AFTER successful AI response
+      if (currentUserMessageCount + 1 >= 5) {
+           setTimeout(() => { // Small delay before triggering assessment UI
+               onMessageLimit();
+           }, 1000);
+      }
+      
+    } catch (error) {
+        console.error("Error sending message:", error);
+        toast({
+            title: "Message Failed",
+            description: error instanceof Error ? error.message : "Could not get AI response. Please try again.",
+            variant: "destructive",
+          });
+        // Optional: Remove the user's message if the API call failed?
+        // setMessages(prev => prev.slice(0, -1)); 
+    } 
+    // No finally block needed if isLoading is fully managed by the parent
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -218,8 +189,8 @@ export function ChatInterface({
   return (
     <div className="flex flex-col h-screen max-w-3xl mx-auto p-4">
       <div className="bg-black/30 backdrop-blur-md rounded-t-xl border border-white/10 p-4 flex items-center gap-3">
-        <Avatar>
-          <AvatarImage src={aiAvatar} />
+      <Avatar className="w-24 h-24 border border-white/20 overflow-hidden">
+      <AvatarImage src={avatarSrc} alt={characterName} className="object-scale-down" />
           <AvatarFallback>{getInitials(characterName)}</AvatarFallback>
         </Avatar>
         <div>
@@ -236,7 +207,7 @@ export function ChatInterface({
           >
             <Sparkles className="h-3 w-3 mr-1" />
             <span>
-              {10 - messages.filter(m => m.sender === 'user').length} messages left
+              {Math.max(0, 5 - messages.filter(m => m.sender === 'user').length)} messages left
             </span>
           </Button>
         </div>
@@ -267,22 +238,6 @@ export function ChatInterface({
             </motion.div>
           ))}
           
-          {isTyping && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex justify-start"
-            >
-              <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-white/10 text-white rounded-tl-none">
-                <div className="flex space-x-2">
-                  <div className="w-2 h-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-          
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
@@ -296,13 +251,13 @@ export function ChatInterface({
             onKeyDown={handleKeyDown}
             placeholder="Type your message..."
             className="flex-1 bg-white/10 border-white/10 text-white"
-            disabled={isLoading || isTyping || messages.filter(m => m.sender === 'user').length >= 9}
+            disabled={isLoading || messages.filter(m => m.sender === 'user').length >= 5}
           />
           <Button
             size="icon"
             variant="outline"
             className="border-white/10 bg-white/5 text-white hover:bg-white/10"
-            disabled={isLoading || isTyping}
+            disabled={isLoading}
           >
             <Mic className="h-5 w-5" />
           </Button>
@@ -310,13 +265,13 @@ export function ChatInterface({
             size="icon"
             onClick={handleSendMessage}
             className="bg-gradient-to-r from-blue-600 to-violet-600 text-white hover:from-blue-700 hover:to-violet-700"
-            disabled={!inputValue.trim() || isLoading || isTyping || messages.filter(m => m.sender === 'user').length >= 9}
+            disabled={!inputValue.trim() || isLoading || messages.filter(m => m.sender === 'user').length >= 5}
           >
             <Send className="h-5 w-5" />
           </Button>
         </div>
         
-        {messages.filter(m => m.sender === 'user').length >= 9 && !isLoading && (
+        {messages.filter(m => m.sender === 'user').length >= 5 && !isLoading && (
           <p className="text-center text-white/70 text-sm mt-2">
             Message limit reached. Your conversation will be assessed soon.
           </p>
@@ -324,9 +279,17 @@ export function ChatInterface({
         
         {isLoading && (
           <p className="text-center text-white/70 text-sm mt-2 animate-pulse">
-            Analyzing your conversation skills...
+            Thinking...
           </p>
         )}
+        
+        {/* FAQ Link */}
+        <p className="text-center text-xs text-white/50 mt-3 pt-2 border-t border-white/10">
+          Want to understand communication archetypes better? 
+          <Link href="/faq" className="text-cyan-400 hover:text-cyan-300 underline ml-1">
+            Check out our guide
+          </Link>
+        </p>
       </div>
     </div>
   );

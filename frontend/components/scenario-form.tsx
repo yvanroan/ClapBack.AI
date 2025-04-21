@@ -14,9 +14,10 @@ import { ArrowLeft, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 import { motion } from '@/lib/motion';
 import { ScenarioIDResponse } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 const formSchema = z.object({
-  type: z.string().min(1, "Select a conversation type"),
+  scenario_type: z.string().min(1, "Select a conversation type"),
   setting: z.string().min(3, "Setting is required"),
   goal: z.string().min(3, "Goal is required"),
   system_archetype: z.string().min(1, "Character type is required"),
@@ -37,7 +38,7 @@ export function ScenarioForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      type: "",
+      scenario_type: "",
       setting: "",
       goal: "",
       system_archetype: "",
@@ -49,14 +50,14 @@ export function ScenarioForm() {
 
   const goToStep = (stepNumber: number) => {
     if (stepNumber === 2) {
-      const step1Fields = ['type', 'setting', 'goal'];
+      const step1Fields = ['scenario_type', 'setting', 'goal'];
       const step1Valid = step1Fields.every(field => {
         const fieldState = form.getFieldState(field as any);
         return !fieldState.invalid;
       });
       
       if (!step1Valid) {
-        form.trigger(['type', 'setting', 'goal']);
+        form.trigger(['scenario_type', 'setting', 'goal']);
         return;
       }
     }
@@ -87,11 +88,10 @@ export function ScenarioForm() {
         throw new Error(`API Error (${response.status}): ${errorDetail}`);
       }
 
-      const scenarioId: ScenarioIDResponse = await response.json();
-      console.log("Received scenario data from backend:", scenarioId);
+      const scenarioIdResponse: ScenarioIDResponse = await response.json();
+      console.log("Received scenario ID from backend:", scenarioIdResponse.id);
 
-      
-      router.push(`/chat?data=${scenarioId.id}`);
+      router.push(`/chat?id=${scenarioIdResponse.id}`);
 
     } catch (error) {
       console.error("Error submitting scenario:", error);
@@ -134,7 +134,7 @@ export function ScenarioForm() {
             >
               <FormField
                 control={form.control}
-                name="type"
+                name="scenario_type"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-white">Conversation Type</FormLabel>
@@ -144,7 +144,7 @@ export function ScenarioForm() {
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="bg-gray-900 border-white/20">
+                      <SelectContent className="bg-gray-400 border-white/20">
                         <SelectItem value="dating">Dating</SelectItem>
                         <SelectItem value="friendship">Friendship</SelectItem>
                         <SelectItem value="small_talk">Small Talk</SelectItem>
@@ -182,7 +182,7 @@ export function ScenarioForm() {
                     <FormLabel className="text-white">What's your goal?</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Get a date, make friends, get a job..." 
+                        placeholder="Get a date, make friends, first impression..." 
                         {...field} 
                         className="bg-black/50 border-white/20 text-white" 
                       />
@@ -220,13 +220,26 @@ export function ScenarioForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-white">Who are you talking to?</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Friendly barista, CEO, cute stranger..." 
-                        {...field} 
-                        className="bg-black/50 border-white/20 text-white" 
-                      />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-black/50 border-white/20 text-white">
+                          <SelectValue placeholder="Select character archetype" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-gray-400 border-white/20">
+                        {[
+                          "The Icy One",
+                          "The Awkward Sweetheart",
+                          "The Certified Baddie",
+                          "The Philosopher Situationship",
+                          "The Chaotic Extrovert"
+                        ].map(archetype => (
+                          <SelectItem key={archetype} value={archetype}>
+                            {archetype}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -279,7 +292,7 @@ export function ScenarioForm() {
                             <SelectValue placeholder="Select" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className="bg-gray-900 border-white/20">
+                        <SelectContent className="bg-gray-400 border-white/20">
                           <SelectItem value="male">Male</SelectItem>
                           <SelectItem value="female">Female</SelectItem>
                           <SelectItem value="non-binary">Non-binary</SelectItem>
@@ -303,7 +316,7 @@ export function ScenarioForm() {
                             <SelectValue placeholder="Select" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className="bg-gray-900 border-white/20">
+                        <SelectContent className="bg-gray-400 border-white/20">
                           <SelectItem value="male">Male</SelectItem>
                           <SelectItem value="female">Female</SelectItem>
                           <SelectItem value="non-binary">Non-binary</SelectItem>
@@ -322,7 +335,7 @@ export function ScenarioForm() {
                   variant="outline" 
                   onClick={() => goToStep(1)}
                   disabled={isLoading}
-                  className="border-white/20 text-white hover:bg-white/10"
+                  className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:bg-white/10 text-white"
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
@@ -346,6 +359,12 @@ export function ScenarioForm() {
           )}
         </form>
       </Form>
+      <p className="text-center text-xs text-white/50 mt-6">
+        Confused about archetypes or conversation aspects? 
+        <Link href="/faq" className="text-cyan-400 hover:text-cyan-300 underline ml-1">
+           Learn more here.
+        </Link>
+      </p>
     </div>
   );
 }
