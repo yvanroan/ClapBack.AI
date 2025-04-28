@@ -150,7 +150,7 @@ async def create_scenario(scenario_input: ScenarioData):
 
         # 2. Create ScenarioData object (useful for storage)
         scenario_data = ScenarioData(
-            id=scenario_id,
+            # id=scenario_id,
             **scenario_input.dict() # Unpack validated input data
         )
 
@@ -248,8 +248,7 @@ async def process_chat_message(request: Request, chat_input: ChatInput):
     ai_response_text = None
     try:
         # Include the *current* user input in the history for the prompt
-        current_turn_history = conversation_history + [{'role': 'user', 'content': chat_input.user_input}]
-        formatted_history = "\n".join([f"{turn.get('role', 'unknown')}: {turn.get('content', '')}" for turn in current_turn_history])
+        formatted_history = "\n".join([f"{turn.get('role', 'unknown')}: {turn.get('content', '')}" for turn in conversation_history])
         formatted_examples = json.dumps(examples_for_prompt, indent=2)
         roast_level = scenario.get('roast_level', 'N/A')
         system_archetype = scenario.get('system_archetype', 'N/A')
@@ -269,6 +268,7 @@ async def process_chat_message(request: Request, chat_input: ChatInput):
         
         # 4. Generate the final prompt string
         final_prompt = main_convo_prompt(information)
+        print(f"Final prompt: {final_prompt}")
         
         # 5. Call the AI model (using the initialized chat_model)
         print(f"Sending final prompt to AI for scenario: {chat_input.scenario_id}")

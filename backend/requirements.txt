@@ -190,3 +190,10 @@ wrapt==1.17.2
 yarl==1.19.0
 yt-dlp==2025.3.31
 zipp==3.21.0
+logging
+
+# Testing
+pytest==8.0.0
+pytest-asyncio==0.23.3
+pytest-dotenv==0.5.2
+httpx==0.26.0  # For TestClient
