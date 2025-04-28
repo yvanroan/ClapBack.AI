@@ -7,3 +7,21 @@ add success level as a metadata to the data stored in the vector db.
 
 commentary should be optional to only text. would be hard to implement in voice mode.
 except if an other voice does the commentary
+
+next thing to do is to complete the test, currently we have some function for scenario but we need to add
+chat and assessment to it as well.
+
+perfect assessment page and allow user to share their results.
+
+setup the pipeline and get all the data i need to increase my vector db. 
+
+fine a way to give weights to each parameters:
+- the roast level(25%)
+- the personality(15%)
+- the retrieved examples (10%)
+- the conversation history and current input (25%)
+- the scenario(25%)
+
+
+despite using this the personality of gpt still overpowers what the data we're passing, so the next step is to finetune our own model
+

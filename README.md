@@ -1,4 +1,4 @@
-# 🗣️ ClapBack.AI
+# 😈 ClapBack.AI
 
 **Welcome to the Rizz Arena.**  
 
