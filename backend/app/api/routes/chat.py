@@ -30,22 +30,31 @@ async def process_chat_message(request: Request, chat_input: ChatInput):
     
     # 2. Retrieve scenario details and history from storage
     scenario_data = get_scenario(chat_input.scenario_id)
+    print(f"Scenario data")
     if not scenario_data:
         raise HTTPException(status_code=404, detail=f"Scenario '{chat_input.scenario_id}' not found.")
     
     # Get conversation history before adding the new message
-    conversation_history = get_conversation_history(chat_input.scenario_id)
-    
+    try:
+        conversation_history = get_conversation_history(chat_input.scenario_id)
+        print(f"Conversation history")
+    except Exception as e:
+        raise HTTPException(status_code=402, detail=f"Error getting conversation history: {str(e)}")
+
     # 3. Initialize vector service if available
     vector_service = None
+    
     if embedding_model and chroma_collection:
         vector_service = VectorService(
             embedding_model=embedding_model,
             chroma_collection=chroma_collection
         )
-    
+        
+    print(f"Vector service")
     # 4. Process the chat message
     try:
+        print(f"DEBUG ROUTE: About to call process_chat for scenario {chat_input.scenario_id}")
+        
         result = await process_chat(
             user_input=chat_input.user_input,
             scenario_id=chat_input.scenario_id,
@@ -54,8 +63,9 @@ async def process_chat_message(request: Request, chat_input: ChatInput):
             chat_model=chat_model,
             vector_service=vector_service
         )
-        
+        print(f"Result")
         if result["status"] == "error":
+
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error processing chat: {result.get('error', 'Unknown error')}"
@@ -63,12 +73,20 @@ async def process_chat_message(request: Request, chat_input: ChatInput):
         
         ai_response_text = result["response"]
     except Exception as e:
-        print(f"Error processing chat for {chat_input.scenario_id}: {e}")
+        import traceback # Add import
+        print("\n--- UNHANDLED EXCEPTION IN process_chat_message ---") # Header
+        print(f"ERROR TYPE: {type(e).__name__}") # Print the type of error
+        print(f"ERROR DETAILS: {e}\n")
+        print("--- TRACEBACK ---")
+        traceback.print_exc() # Print the full traceback
+        print("--- END TRACEBACK ---\n")
+
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=400,
+            # status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while processing chat: {str(e)}"
         )
-    
+    print(f"AI response text")
     # 5. Update conversation history
     try:
         # Add user message

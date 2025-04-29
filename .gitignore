@@ -42,6 +42,5 @@ backend/archetypes.json
 backend/data/prompts/prompts.py
 backend/reels.txt
 .env
-backend/tests/*
 backend/data/*
 backend/logs.json

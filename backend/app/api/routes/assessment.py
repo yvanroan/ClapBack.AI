@@ -80,7 +80,7 @@ async def get_conversation_assessment(scenario_id: str, request: Request):
                 "scenario_id": scenario_id,
                 "scenario_details": scenario_data,
                 "conversation_history": conversation_history,
-                "assessment_result": assessment_result.dict()
+                "assessment_result": assessment_result
             }
             
             # Write to JSON file
