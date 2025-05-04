@@ -29,6 +29,10 @@ const formSchema = z.object({
 // Define the API endpoint URL using environment variables with a fallback
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+if (API_BASE_URL=='http://localhost:8000') {
+  console.log("🚨 You are using the local endpoint, hopefully this is not prod");
+}
+
 export function ScenarioForm() {
   const router = useRouter();
   const [step, setStep] = useState(1);

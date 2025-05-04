@@ -47,3 +47,4 @@ backend/data/log_transcript.json
 backend/logs.json
 archetypes.txt
 prompts.txt
+cdk/*
