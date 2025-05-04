@@ -3,6 +3,7 @@ from typing import Dict, List, Optional
 from pydantic_settings import BaseSettings
 from pathlib import Path
 
+#BaseSettings gets the .env values for ya
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Rizz API"
     API_V1_STR: str = "/api/v1"
