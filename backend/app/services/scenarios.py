@@ -44,6 +44,7 @@ def get_scenario(scenario_id: str) -> Optional[Dict[str, Any]]:
         The scenario data or None if not found
     """
     scenario_container = scenarios_db.get(scenario_id)
+    
     if not scenario_container or "scenario_data" not in scenario_container:
         return None
     

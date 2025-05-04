@@ -24,7 +24,6 @@ frontend/out/
 
 
 # Environments
-backend/.env
 .venv/
 frontend/next-env.d.ts
 
@@ -34,12 +33,7 @@ backend/__pycache__/
 **/__pycache__/**
 
 # Specific to this project
-backend/chroma_db/* 
 backend/downloads/* 
-backend/prompts.py
-backend/links.txt
-backend/archetypes.json
-backend/data/prompts/prompts.py
 backend/reels.txt
 .env
 backend/data/*

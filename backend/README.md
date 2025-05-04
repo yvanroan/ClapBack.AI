@@ -10,7 +10,7 @@ backend/
 │   ├── api/                  # API layer
 │   │   ├── __init__.py
 │   │   ├── models/           # API request/response models
-│   │   │   └── schema.py     # Pydantic models (also exists at root)
+│   │   │   └── schema.py     # Pydantic models
 │   │   ├── middleware/       # API middleware (empty)
 │   │   ├── routes/           # Endpoint routes
 │   │   │   ├── __init__.py
@@ -32,17 +32,22 @@ backend/
 │   │   ├── chat.py           # Chat service logic
 │   │   ├── scenarios.py      # Scenario management
 │   │   ├── vector_service.py # Vector DB service interaction
-│   │   └── vector_store.py   # Vector database operations (also exists at root)
+│   │   └── vector_store.py   # Vector database operations 
 │   ├── utils/                # Utility functions
 │   │   ├── __init__.py
-│   │   └── cleaner.py        # Output cleaner for LLM responses (also exists at root)
-│   └── pipeline/             # Data processing pipelines (empty)
+│   │   └── cleaner.py        # Output cleaner for LLM responses
+│   └── pipeline/             # Data ingestion&processing pipelines
+│   │   ├── __init__.py
+│   │   ├── pipeline_start.py
+│   │   ├── transcript_to_vector_db.py
+│   │   └── url_to_transcript.py
 ├── data/                     # Data storage
 │   ├── prompts/              # Store prompt templates
-│   │   └── prompts.py        # Prompt templates (also exists at root)
-│   ├── archetypes.json       # Configuration files (also exists at root)
+│   │   └── prompts.py        # Prompt templates 
+│   ├── archetypes.json       # Configuration files 
 │   ├── chroma_db/            # Vector database storage
 │   └── downloads/            # Downloaded data
+│   └── log_transcript        # log for ingestion pipeline
 ├── tests/                    # Test suite
 │   ├── __init__.py
 │   ├── conftest.py
@@ -66,20 +71,7 @@ backend/
 ├── requirements.txt          # Dependencies
 └── .env                      # Environment variables
 ```
-some extra file that are undergoing migration
-```
-├── downloads/                # Downloaded data (duplicate)
-├── main.py                   # Original entry point (partially migrated)
-├── back.py                   # entry point of the data pipeline
-├── cleaner.py                # Utility - duplicate in app/utils/
-├── youtube_to_vectordb.py    # Script for populating vector DB 
-├── merge_scenario.py         # Script for merging scenarios to tagged data
-├── tagging_processor.py      # Script for adding tags to the data
-├── prompts.py                # Prompts - duplicate in data/prompts/
-├── schema.py                 # Pydantic models - duplicate in app/api/models/
-├── vector_store.py           # Vector store logic - duplicate in app/services/
-└── archetypes.json           # Config - duplicate in data/
-```
+
 
 ## Migration Notes
 
@@ -92,13 +84,6 @@ This structure is being set up alongside the existing code for a smooth transiti
 
 ## Running the Application
 
-**Current (original) version:**
-```
-cd backend
-python main.py
-```
-
-**New structured version (once migration is complete):**
 ```
 from root directory:
 
@@ -109,6 +94,5 @@ python -m backend.app.main
 
 Required environment variables:
 - `GEMINI_API_KEY`: API key for Gemini
-- `GEMINI_API_KEY_EMBEDDING`: API key for Gemini embeddings
 - `HUGGINGFACE_TOKEN`: Token for HuggingFace
 - `DEEPSEEK_API_KEY`: API key for DeepSeek (optional)

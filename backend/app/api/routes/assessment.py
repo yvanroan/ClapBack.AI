@@ -4,7 +4,7 @@ import json
 import os
 
 # Import models
-from backend.schema import AssessmentResponse
+from backend.app.api.models.schema import AssessmentResponse
 
 # Import services
 from backend.app.services.scenarios import get_scenario, get_conversation_history

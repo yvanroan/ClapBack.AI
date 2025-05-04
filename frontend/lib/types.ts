@@ -1,6 +1,6 @@
 export interface ScenarioData {
   id: string;
-  type: string;
+  scenario_type: string;
   setting: string;
   goal: string;
   system_archetype: string;

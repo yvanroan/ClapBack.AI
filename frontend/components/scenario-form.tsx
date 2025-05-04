@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { ArrowLeft, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sparkles, Loader2, Dices } from 'lucide-react';
 import { motion } from '@/lib/motion';
 import { ScenarioIDResponse } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -62,6 +62,64 @@ export function ScenarioForm() {
       }
     }
     setStep(stepNumber);
+  };
+
+  const randomizeForm = () => {
+    // Sample settings for randomization
+    const settings = [
+      "Coffee shop in downtown",
+      "Beach party",
+      "College campus",
+      "Music festival",
+      "Dating app chat",
+      "Work happy hour",
+      "Neighbor's BBQ",
+      "Book club meeting",
+      "Gym class",
+      "Airport lounge"
+    ];
+    
+    const goals = [
+      "Get a date for Friday night",
+      "Make a new friend",
+      "Get their phone number",
+      "Start a meaningful conversation",
+      "Find common interests",
+      "Practice social skills",
+      "Impress them with your wit",
+      "Plan a future meetup",
+      "Get to know them better",
+      "Just have a fun conversation"
+    ];
+    
+    const scenarioTypes = ["dating", "friendship", "small_talk", "random_deep_talk"];
+    const archetypes = [
+      "The Icy One",
+      "The Awkward Sweetheart",
+      "The Certified Baddie",
+      "The Philosopher Situationship",
+      "The Chaotic Extrovert"
+    ];
+    const genders = ["male", "female", "non-binary", "other"];
+    
+    // Generate random values
+    const randomValues = {
+      scenario_type: scenarioTypes[Math.floor(Math.random() * scenarioTypes.length)],
+      setting: settings[Math.floor(Math.random() * settings.length)],
+      goal: goals[Math.floor(Math.random() * goals.length)],
+      system_archetype: archetypes[Math.floor(Math.random() * archetypes.length)],
+      roast_level: Math.floor(Math.random() * 5) + 1,
+      player_sex: genders[Math.floor(Math.random() * genders.length)],
+      system_sex: genders[Math.floor(Math.random() * genders.length)],
+    };
+    
+    // Set random values in form
+    form.reset(randomValues);
+    
+    toast({
+      title: "Random scenario generated!",
+      description: "Feel free to modify any values before continuing.",
+    });
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -120,6 +178,14 @@ export function ScenarioForm() {
             "Let's set the scene for your conversation" : 
             "Almost there! A few more details..."}
         </p>
+        <Button 
+          type="button" 
+          onClick={randomizeForm} 
+          variant="outline"
+          className="mt-2 bg-black/50 border-white/20 text-white hover:bg-white/10"
+        >
+          <Dices className="mr-2 h-4 w-4" /> Randomize
+        </Button>
       </div>
 
       <Form {...form}>

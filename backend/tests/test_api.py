@@ -3,7 +3,7 @@ Tests for the API endpoints.
 """
 import pytest
 from fastapi import status
-from backend.schema import ScenarioIDResponse
+from backend.app.api.models.schema import ScenarioIDResponse
 from unittest.mock import patch, AsyncMock
 from backend.app.services.scenarios import create_scenario, scenarios_db, add_conversation_message
 import asyncio

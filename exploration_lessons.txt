@@ -23,5 +23,82 @@ fine a way to give weights to each parameters:
 - the scenario(25%)
 
 
-despite using this the personality of gpt still overpowers what the data we're passing, so the next step is to finetune our own model
+despite using this the personality of gemini still overpowers what the data we're passing, so the next step is to finetune our own model.
 
+Paper i got inspired from:
+MELD
+
+Even if we finetune our own model our data ingestion pipeline is still lacking. 
+ we provide information about the general context accross chunk but we need to add more context
+ we need to add context on tonality (and visual cues of the user) more accurately
+
+ another issue is, utterances like “yeah”, “okay”, “no” can express varied emotions depending on 
+ the context and discourse of the dialogue.
+
+Look at the equivalent of emotionLines but for audio.
+
+To simplify things, use these emotion tags along with sentiment for each utterance of a speaker 
+    Ekman’s six universal emotions (Joy, Sadness, Fear, Anger, Surprise, and Disgust)
+
+what is "Fleiss’ kappa score "?
+
+given that we have the transcript and audio for movies, we can use :
+In order to find the accurate timestamp for each utterance, we
+are going to use a transcription alignment tool called Gentle. will look into it
+http://github.com/lowerquality/gentle
+
+"
+We have also converted these fine-grained
+emotion labels into more coarse-grained sentiment
+classes by considering anger, disgust, fear, sadness
+as negative, joy as positive, and neutral as neutral
+sentiment-bearing class. Surprise is an example of
+a complex emotion which can be expressed with
+both positive and negative sentiment.
+"
+~ MELD paper
+
+In the MELD paper, dialogue basically represent a chunk here, so a conversation.
+utterance are basically lines for us. 
+
+i dont really understand the experiment section.
+Probably because i dont understand the feature technique that they used. 
+i should look that up
+
+
+question regarding the meld dataset and their use of friend's. 
+i understand that the main characters appear more often and therefor should be 
+prioritized in chats but does that mean they reduced all other characters utterance
+to a single persona, other? or is other used in the paper just for description purposes
+
+From what i could get the paper is fire.
+
+to do asap:
+ -  add emotion tags along with sentiment for each lines of a speaker 
+    Ekman’s six universal emotions (Joy, Sadness, Fear, Anger, Surprise, and Disgust)
+
+ -  we can look into classifiers that analyze voices but we will have to double check the first 10
+ -  the problem is that the classifier probably can't assign emotion tags for every line eventhough
+    it is primordial
+
+
+
+Making LLMs even more accessible with bitsandbytes, 4-bit quantization and QLoRA article
+
+what is a 4-bit quantization? what is bit precision in terms of running a model?
+what is LoRA? in depth. 
+
+bro, i had a whole semester about mantissa and stuff and i barely paid attention, 😭 pain.
+
+"It has
+been empirically proven that the E4M3 is best suited for the forward pass, and the
+E5M2 is best suited for the backward computation"
+
+what do we refer to when we say forward pass ? and backward computation?
+in a supervised learning scenario, forward pass would be passing the input provided 
+through the model and produce an output.
+
+Back comp is mostlikely back-propagation, using the value after cross-entropy to identify
+which parameters should be "tweaked" to get closer to the expected output
+
+Backpropagation identifies the culprit and optimization administer the punishment.

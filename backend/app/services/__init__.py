@@ -35,7 +35,6 @@ from backend.app.services.vector_store import (
     initialize_chroma_client,
     get_or_create_collection,
     generate_embedding,
-    embed_text,
     store_document,
     process_and_store_blocks,
     retrieve_relevant_examples
@@ -44,14 +43,6 @@ from backend.app.services.vector_store import (
 # Import VectorService class
 from backend.app.services.vector_service import VectorService
 
-# Import LLM services
-from backend.app.services.llm import (
-    initialize_gemini,
-    get_chat_model,
-    start_chat_session,
-    generate_text,
-    process_chat_with_context
-)
 
 # Export all services for simplified imports
 __all__ = [
@@ -78,16 +69,8 @@ __all__ = [
     'initialize_chroma_client',
     'get_or_create_collection',
     'generate_embedding',
-    'embed_text',
     'store_document',
     'process_and_store_blocks',
     'retrieve_relevant_examples',
-    'VectorService',
-    
-    # LLM services
-    'initialize_gemini',
-    'get_chat_model',
-    'start_chat_session',
-    'generate_text',
-    'process_chat_with_context'
+    'VectorService'
 ]

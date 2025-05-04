@@ -15,7 +15,7 @@ import { ArrowLeft } from 'lucide-react';
 const loadArchetypeData = () => {
   try {
     // Adjust path if archetypes.json is elsewhere relative to the project root
-    const filePath = path.join(process.cwd(), '../backend/archetypes.json'); 
+    const filePath = path.join(process.cwd(), '../backend/data/archetypes.json'); 
     const rawData = fs.readFileSync(filePath, 'utf-8');
     const jsonData = JSON.parse(rawData);
     return jsonData;

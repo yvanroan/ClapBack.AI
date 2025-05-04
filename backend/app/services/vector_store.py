@@ -9,11 +9,9 @@ def initialize_embedding_model():
     """Initialize the embedding model for vector search."""
     try:
         # Configure the Gemini API with the embedding-specific key
-        embedding_api_key = get_api_key_or_raise("GEMINI_API_KEY_EMBEDDING")
+        embedding_api_key = get_api_key_or_raise("GEMINI_API_KEY")
         genai.configure(api_key=embedding_api_key)
-        model = genai.GenerativeModel(settings.EMBEDDING_MODEL_NAME)
-        print("Embedding model initialized successfully.")
-        return model
+        return settings.EMBEDDING_MODEL_NAME
     except Exception as e:
         print(f"Error initializing embedding model: {e}")
         return None
@@ -70,17 +68,6 @@ def generate_embedding(text: str, model_name: str = settings.EMBEDDING_MODEL_NAM
         print(f"Error generating embedding for text (model: {model_name}): {e}")
         return None
 
-def embed_text(text: str) -> List[float]:
-    """
-    Generate embeddings for a text string.
-    
-    Args:
-        text: The text to embed
-        
-    Returns:
-        List of embedding values
-    """
-    return generate_embedding(text, settings.EMBEDDING_MODEL_NAME)
 
 def store_document(
     collection,
@@ -99,7 +86,7 @@ def store_document(
     """
     try:
         # Generate embedding
-        embedding = embed_text(text)
+        embedding = generate_embedding(text, settings.EMBEDDING_MODEL_NAME)
         if not embedding:
             print(f"Error: Failed to generate embedding for document {document_id}")
             return False
@@ -116,7 +103,7 @@ def store_document(
         print(f"Error storing document: {e}")
         return False
 
-def process_and_store_blocks(input_filepath: str, collection, embedding_model=None):
+def process_and_store_blocks(input_filepath: str, collection):
     """
     Loads data, generates embeddings, and stores them in ChromaDB.
     
@@ -198,10 +185,7 @@ def process_and_store_blocks(input_filepath: str, collection, embedding_model=No
                 tagging_data = tagging_result[0] # Get the first element
                 if isinstance(tagging_data, dict):
                     for key, value in tagging_data.items():
-                        # Handle potential non-JSON serializable types if necessary
-                        # For now, assume values are basic types or lists/dicts compatible with ChromaDB
                         if isinstance(value, list) or isinstance(value, dict):
-                             # ChromaDB often prefers storing complex types as JSON strings
                             metadata[key] = json.dumps(value)
                         elif value is not None: # Add if not None
                              metadata[key] = value
@@ -249,8 +233,7 @@ def process_and_store_blocks(input_filepath: str, collection, embedding_model=No
                 except Exception as e:
                     print(f"  Error adding batch to ChromaDB: {e}")
                     total_errors += len(batch_ids) # Count errors for the whole batch
-                    # Decide how to handle batch errors (e.g., skip, retry individual items?)
-                    # For now, clear batch and continue
+                    
                     batch_embeddings, batch_metadatas, batch_ids, batch_documents = [], [], [], [] 
                     
 
@@ -272,7 +255,7 @@ def process_and_store_blocks(input_filepath: str, collection, embedding_model=No
     print(f"\n--- Embedding and Storage Complete ---")
     print(f"Total blocks processed and attempted to add: {total_blocks_processed}")
     print(f"Total errors encountered: {total_errors}")
-    print(f"Data stored in ChromaDB collection '{collection.name}' at '{settings.CHROMA_DB_DIR}'")
+
 
 def retrieve_relevant_examples(
     collection,

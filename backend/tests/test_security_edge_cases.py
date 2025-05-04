@@ -6,7 +6,7 @@
 # from fastapi import FastAPI
 # from fastapi.testclient import TestClient
 # from backend.app import create_application
-# from backend.schema import ScenarioData, ChatInput
+# from backend.app.api.models.schema import ScenarioData, ChatInput
 
 
 # @pytest.fixture

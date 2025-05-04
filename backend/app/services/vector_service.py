@@ -5,15 +5,13 @@ from backend.app.core import settings
 class VectorService:
     """Service for vector database operations."""
     
-    def __init__(self, embedding_model=None, chroma_collection=None):
+    def __init__(self, chroma_collection=None):
         """
         Initialize the vector service.
         
         Args:
-            embedding_model: The embedding model for generating embeddings
             chroma_collection: The ChromaDB collection for retrieval
         """
-        self.embedding_model = embedding_model
         self.chroma_collection = chroma_collection
     
     async def retrieve_relevant_examples(
@@ -35,7 +33,7 @@ class VectorService:
         Returns:
             Dict with retrieved examples
         """
-        if not self.embedding_model or not self.chroma_collection:
+        if not self.chroma_collection:
             print("Vector service resources not available")
             return {}
         

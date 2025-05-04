@@ -2,7 +2,6 @@ import json
 import os
 from typing import Dict, List, Any, Optional
 from backend.app.core import settings
-from backend.app.services.llm import generate_text
 from backend.app.utils.cleaner import clean_gemini_output
 from backend.data.prompts.prompts import assessment_prompt
 from backend.data import load_archetypes_async

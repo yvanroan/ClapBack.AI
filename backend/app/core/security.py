@@ -10,7 +10,6 @@ def validate_api_keys() -> Dict[str, bool]:
     """
     return {
         "GEMINI_API_KEY": settings.GEMINI_API_KEY is not None,
-        "GEMINI_API_KEY_EMBEDDING": settings.GEMINI_API_KEY_EMBEDDING is not None,
         "HUGGINGFACE_TOKEN": settings.HUGGINGFACE_TOKEN is not None,
         "DEEPSEEK_API_KEY": settings.DEEPSEEK_API_KEY is not None
     }

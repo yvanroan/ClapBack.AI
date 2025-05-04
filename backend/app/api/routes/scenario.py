@@ -4,7 +4,7 @@ import time
 import uuid
 
 # Import models
-from backend.schema import ScenarioData, ScenarioIDResponse
+from backend.app.api.models.schema import ScenarioData, ScenarioIDResponse
 
 # Import services
 from backend.app.services.scenarios import create_scenario, get_scenario, generate_scenario_id
@@ -19,19 +19,12 @@ async def create_scenario_route(scenario_input: ScenarioData):
     """
     print(f"Received scenario input: {scenario_input}")
     try:
-        # 1. Generate Unique ID
-        scenario_id = generate_scenario_id()
-
-        # 2. Create ScenarioData object (useful for storage)
-        scenario_data = ScenarioData(
-            **scenario_input.dict()  # Unpack validated input data
-        )
-
-        # 3. Store the scenario using the service
-        stored_scenario_id = create_scenario(scenario_data.dict())
+        # Store the scenario using the service - we'll use the dict() method once
+        # to convert the Pydantic model to a regular dictionary
+        stored_scenario_id = create_scenario(scenario_input.dict())
         print(f"Scenario created and stored (in-memory): {stored_scenario_id}")
 
-        # 4. Return only the ID
+        # Return only the ID
         return ScenarioIDResponse(id=stored_scenario_id)
     except Exception as e:
         print(f"Error creating scenario: {e}")

@@ -17,6 +17,7 @@ async def lifespan(app: FastAPI):
     import google.generativeai as genai
     
     try:
+        #this initializes both the gemini and the embedding
         api_key = get_api_key_or_raise("GEMINI_API_KEY")
         genai.configure(api_key=api_key)
         
@@ -29,10 +30,7 @@ async def lifespan(app: FastAPI):
     
     # Initialize embedding model and vector database
     try:
-        from backend.app.services.vector_store import initialize_embedding_model, initialize_chroma_client, get_or_create_collection
-        
-        print("Initializing Embedding Model...")
-        app.state.embedding_model = initialize_embedding_model()
+        from backend.app.services.vector_store import initialize_chroma_client, get_or_create_collection
         
         print("Initializing ChromaDB Client...")
         app.state.chroma_client = initialize_chroma_client()
@@ -40,7 +38,7 @@ async def lifespan(app: FastAPI):
         print("Getting or Creating Collection...")
         app.state.chroma_collection = get_or_create_collection(app.state.chroma_client)
         
-        if app.state.embedding_model and app.state.chroma_collection:
+        if app.state.chroma_collection:
             print("Vector Database Services Initialized Successfully.")
         else:
             print("WARNING: Vector database services not fully initialized.")

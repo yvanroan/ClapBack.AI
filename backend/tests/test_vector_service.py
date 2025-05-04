@@ -10,7 +10,6 @@ from backend.app.services.vector_store import (
     initialize_chroma_client,
     get_or_create_collection,
     generate_embedding,
-    embed_text,
     store_document,
     retrieve_relevant_examples
 )
@@ -88,24 +87,7 @@ def test_get_or_create_collection_failure():
     collection = get_or_create_collection(mock_client, "test_collection")
     assert collection is None
 
-def test_embed_text():
-    """
-    Test text embedding generation.
-    
-    Reasoning: Verifies that the wrapper function correctly calls the underlying
-    embedding generator. Embedding accuracy is critical for retrieval quality.
-    """
-    test_text = "This is a test text for embedding"
-    test_embeddings = [0.1, 0.2, 0.3, 0.4]
-    
-    # Mock the lower-level function
-    with patch('backend.app.services.vector_store.generate_embedding', return_value=test_embeddings) as mock_gen:
-        with patch('backend.app.services.vector_store.settings.EMBEDDING_MODEL_NAME', 'test-embedding-model'):
-            embeddings = embed_text(test_text)
-            
-            # Assertions
-            mock_gen.assert_called_once_with(test_text, 'test-embedding-model')
-            assert embeddings == test_embeddings
+
 
 def test_store_document_success():
     """
@@ -121,11 +103,13 @@ def test_store_document_success():
     test_text = "This is a test document"
     test_metadata = {"source": "test", "category": "unit_test"}
     
-    with patch('backend.app.services.vector_store.embed_text', return_value=mock_embeddings) as mock_embed:
+    with patch('backend.app.services.vector_store.generate_embedding', return_value=mock_embeddings) as mock_embed, \
+         patch('backend.app.services.vector_store.settings.EMBEDDING_MODEL_NAME', 'test-model'):
+        # Call the real function - not through VectorService
         result = store_document(mock_collection, test_doc_id, test_text, test_metadata)
         
         # Assertions
-        mock_embed.assert_called_once_with(test_text)
+        mock_embed.assert_called_once_with(test_text, 'test-model')
         mock_collection.add.assert_called_once_with(
             ids=[test_doc_id],
             embeddings=[mock_embeddings],
@@ -148,11 +132,13 @@ def test_store_document_embedding_failure():
     test_metadata = {"source": "test", "category": "unit_test"}
     
     # Simulate embedding failure
-    with patch('backend.app.services.vector_store.embed_text', return_value=None) as mock_embed:
+    with patch('backend.app.services.vector_store.generate_embedding', return_value=None) as mock_embed, \
+         patch('backend.app.services.vector_store.settings.EMBEDDING_MODEL_NAME', 'test-model'):
+        # Call the real function - not through VectorService
         result = store_document(mock_collection, test_doc_id, test_text, test_metadata)
         
         # Assertions
-        mock_embed.assert_called_once_with(test_text)
+        mock_embed.assert_called_once_with(test_text, 'test-model')
         mock_collection.add.assert_not_called()
         assert result is False
 
@@ -165,7 +151,6 @@ async def test_vector_service_retrieve_examples_success():
     underlying vector store functions to retrieve relevant examples.
     """
     # Mock data
-    mock_embedding_model = MagicMock()
     mock_collection = MagicMock()
     
     # Expected results from retrieve_relevant_examples
@@ -178,7 +163,6 @@ async def test_vector_service_retrieve_examples_success():
     
     # Create service instance with mocks
     vector_service = VectorService(
-        embedding_model=mock_embedding_model,
         chroma_collection=mock_collection
     )
     
@@ -210,7 +194,7 @@ async def test_vector_service_retrieve_examples_missing_resources():
     embedding model or collection is not initialized, preventing cascading failures.
     """
     # Create service with missing resources
-    vector_service = VectorService(embedding_model=None, chroma_collection=None)
+    vector_service = VectorService(chroma_collection=None)
     
     results = await vector_service.retrieve_relevant_examples(
         user_input="test query",
@@ -230,12 +214,10 @@ async def test_vector_service_retrieve_examples_error():
     appropriately, returning an empty result rather than failing.
     """
     # Mock data
-    mock_embedding_model = MagicMock()
     mock_collection = MagicMock()
     
     # Create service instance with mocks
     vector_service = VectorService(
-        embedding_model=mock_embedding_model,
         chroma_collection=mock_collection
     )
     

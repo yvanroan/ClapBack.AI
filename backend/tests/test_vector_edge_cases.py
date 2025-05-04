@@ -5,7 +5,6 @@ import pytest
 from unittest.mock import patch, MagicMock
 from backend.app.services.vector_store import (
     generate_embedding,
-    embed_text,
     retrieve_relevant_examples
 )
 

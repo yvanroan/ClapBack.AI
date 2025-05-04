@@ -4,13 +4,18 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Mic, Send, Sparkles } from 'lucide-react';
+import { Mic, Send, Sparkles, Info } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from '@/lib/motion';
 import { ScenarioData } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ChatMessage } from '@/lib/types';
 import Link from 'next/link';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 // Import archetype images
 import IcyOneMale from './assets/icy_one_2_male.png';
@@ -197,16 +202,73 @@ export function ChatInterface({
   return (
     <div className="flex flex-col h-screen max-w-3xl mx-auto p-4">
       <div className="bg-black/30 backdrop-blur-md rounded-t-xl border border-white/10 p-4 flex items-center gap-3">
-      <Avatar className="w-24 h-24 border border-white/20 overflow-hidden">
-      <AvatarImage src={avatarSrc} alt={characterName} className="object-scale-down" />
+        <Avatar className="w-24 h-24 border border-white/20 overflow-hidden">
+          <AvatarImage src={avatarSrc} alt={characterName} className="object-scale-down" />
           <AvatarFallback>{getInitials(characterName)}</AvatarFallback>
         </Avatar>
-        <div>
-          <h2 className="font-semibold text-white">{characterName}</h2>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <h2 className="font-semibold text-white">{characterName}</h2>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full p-0 text-white/70 hover:text-white hover:bg-white/10">
+                  <Info className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 bg-black/80 backdrop-blur-md border border-white/10 text-white p-4 rounded-xl shadow-xl">
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400">Scenario Details</h3>
+                  
+                  <div className="space-y-2">
+                    <div>
+                      <h4 className="text-xs text-white/50">Conversation Type</h4>
+                      <p className="text-sm">{scenarioData.scenario_type || 'Not specified'}</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-xs text-white/50">Setting</h4>
+                      <p className="text-sm">{scenarioData.setting}</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-xs text-white/50">Your Goal</h4>
+                      <p className="text-sm">{scenarioData.goal}</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-xs text-white/50">Character Archetype</h4>
+                      <p className="text-sm">{scenarioData.system_archetype}</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-xs text-white/50">Roast Level</h4>
+                      <div className="flex items-center gap-2">
+                        <div className="bg-white/10 h-1.5 flex-1 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-gradient-to-r from-green-400 to-red-500 h-full" 
+                            style={{ width: `${(scenarioData.roast_level / 5) * 100}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs">{scenarioData.roast_level}/5</span>
+                      </div>
+                      <p className="text-xs text-white/50 mt-1">
+                        {scenarioData.roast_level === 1 && "Be gentle with me"}
+                        {scenarioData.roast_level === 2 && "Slight roast"}
+                        {scenarioData.roast_level === 3 && "Balanced feedback"}
+                        {scenarioData.roast_level === 4 && "Don't hold back"}
+                        {scenarioData.roast_level === 5 && "Destroy me completely"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
           <p className="text-xs text-white/60">
-            {scenarioData.setting} • {scenarioData.type} conversation
+            {scenarioData.setting} • {scenarioData.scenario_type} conversation
           </p>
         </div>
+        
         <div className="ml-auto flex gap-2">
           <Button
             size="sm"

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, HTTPException, status
 from typing import Dict, Any
 
 # Import models
-from backend.schema import ChatInput, AIResponse
+from backend.app.api.models.schema import ChatInput, AIResponse
 
 # Import services
 from backend.app.services.scenarios import get_scenario, get_conversation_history, add_conversation_message
@@ -21,7 +21,6 @@ async def process_chat_message(request: Request, chat_input: ChatInput):
     
     # 1. Access resources initialized in lifespan
     chat_model = request.app.state.chat_model
-    embedding_model = getattr(request.app.state, "embedding_model", None)
     chroma_collection = getattr(request.app.state, "chroma_collection", None)
     
     # Check if chat model is available
@@ -44,9 +43,8 @@ async def process_chat_message(request: Request, chat_input: ChatInput):
     # 3. Initialize vector service if available
     vector_service = None
     
-    if embedding_model and chroma_collection:
+    if chroma_collection:
         vector_service = VectorService(
-            embedding_model=embedding_model,
             chroma_collection=chroma_collection
         )
         
