@@ -36,7 +36,14 @@ backend/__pycache__/
 backend/downloads/* 
 backend/reels.txt
 .env
-backend/data/*
+backend/data/audio
+backend/data/chroma_db
+backend/data/downloads
+backend/data/prompts/*
+backend/data/speaker_transcript_folder
+backend/data/whisper_transcript
+backend/data/archetypes.json
+backend/data/log_transcript.json
 backend/logs.json
 archetypes.txt
 prompts.txt
