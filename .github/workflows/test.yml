@@ -22,7 +22,7 @@ jobs:
       - name: Decode archetype file
         if: ${{ secrets.ARCHETYPE_BASE64 != '' }}
         run: |
-          echo "${{ secrets.ARCHETYPE_BASE64 }}" | base64 -d > backend/data/archetype.py
+          echo "${{ secrets.ARCHETYPE_BASE64 }}" | base64 -d > backend/data/archetypes.json
 
       - name: Set up Python
         uses: actions/setup-python@v4

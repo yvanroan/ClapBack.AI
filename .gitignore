@@ -38,3 +38,5 @@ backend/reels.txt
 .env
 backend/data/*
 backend/logs.json
+archetypes.txt
+prompts.txt
