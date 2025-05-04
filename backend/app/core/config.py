@@ -2,6 +2,7 @@ import os
 from typing import Dict, List, Optional
 from pydantic_settings import BaseSettings
 from pathlib import Path
+from pydantic import root_validator
 
 #BaseSettings gets the .env values for ya
 class Settings(BaseSettings):
