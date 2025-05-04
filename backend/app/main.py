@@ -1,6 +1,6 @@
 import uvicorn
 from backend.app import create_application
-from backend.app.config import settings
+from backend.app.core import settings
 
 # Create the FastAPI application using the factory
 app = create_application()
