@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd /opt/render/project/src
+
 mkdir -p backend/data/prompts
 echo "$PROMPT_BASE64" | base64 -d > backend/data/prompts/prompts.py
 
