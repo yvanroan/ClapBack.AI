@@ -95,4 +95,3 @@ python -m backend.app.main
 Required environment variables:
 - `GEMINI_API_KEY`: API key for Gemini
 - `HUGGINGFACE_TOKEN`: Token for HuggingFace
-- `DEEPSEEK_API_KEY`: API key for DeepSeek (optional)

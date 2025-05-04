@@ -19,7 +19,6 @@ class Settings(BaseSettings):
     # API Keys
     GEMINI_API_KEY: str
     HUGGINGFACE_TOKEN: str 
-    DEEPSEEK_API_KEY: str 
     
     # Directory settings
     DATA_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data")

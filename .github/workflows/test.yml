@@ -6,9 +6,23 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Decode prompts file
+        if: ${{ secrets.PROMPT_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.PROMPT_BASE64 }}" | base64 -d > backend/data/prompts/prompts.py
+
+      - name: Decode archetype file
+        if: ${{ secrets.ARCHETYPE_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.ARCHETYPE_BASE64 }}" | base64 -d > backend/data/archetype.py
 
       - name: Set up Python
         uses: actions/setup-python@v4
