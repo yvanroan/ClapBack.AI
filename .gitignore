@@ -39,7 +39,7 @@ backend/reels.txt
 backend/data/audio
 backend/data/chroma_db
 backend/data/downloads
-backend/data/prompts/*
+backend/data/prompts/prompts.py
 backend/data/speaker_transcript_folder
 backend/data/whisper_transcript
 backend/data/archetypes.json
