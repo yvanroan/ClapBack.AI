@@ -41,7 +41,6 @@ flatbuffers==25.2.10
 fonttools==4.57.0
 frozenlist==1.5.0
 fsspec==2025.3.2
-genai==2.1.0
 google-ai-generativelanguage==0.6.15
 google-api-core==2.24.2
 google-api-python-client==2.167.0
