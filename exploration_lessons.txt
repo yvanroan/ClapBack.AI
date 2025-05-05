@@ -109,3 +109,10 @@ chromadb to qdrant, i made the changes in the vector clases and asked cursor to
 propagate the changes in the code and bro was hallucinating hard 😂. had to 
 do all the work myself.
 
+
+llms are really amazing man, if you have a problem now it just spits out what you are supposed to do or who you should 
+contact to get the problem solved.
+
+this is a net plus for society. i've been using tools i didn't even know existed for problems i've been facing for a while
+
+LIFE IS GOOD!!!!!

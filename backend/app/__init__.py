@@ -93,7 +93,7 @@ def create_application() -> FastAPI:
     from backend.app.api import api_router
     app.include_router(api_router, prefix=settings.API_V1_STR)
     
-    @app.get("/")
+    @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
     async def root():
         """Root endpoint for health check."""
         return {"message": f"Welcome to the {settings.PROJECT_NAME} Backend"}
