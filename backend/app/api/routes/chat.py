@@ -21,7 +21,8 @@ async def process_chat_message(request: Request, chat_input: ChatInput):
     
     # 1. Access resources initialized in lifespan
     chat_model = request.app.state.chat_model
-    chroma_collection = getattr(request.app.state, "chroma_collection", None)
+    qdrant_client = getattr(request.app.state, "qdrant_client", None)
+    collection_name = getattr(request.app.state, "collection_name", None)
     
     # Check if chat model is available
     if not chat_model:
@@ -41,12 +42,11 @@ async def process_chat_message(request: Request, chat_input: ChatInput):
         raise HTTPException(status_code=402, detail=f"Error getting conversation history: {str(e)}")
 
     # 3. Initialize vector service if available
-    vector_service = None
     
-    if chroma_collection:
-        vector_service = VectorService(
-            chroma_collection=chroma_collection
-        )
+    vector_service = VectorService(
+        qdrant_client,
+        collection_name
+    )
         
     print(f"Vector service")
     # 4. Process the chat message

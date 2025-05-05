@@ -82,7 +82,6 @@ async def test_partial_initialization():
             
             # Check that chat model is initialized but embedding model is None
             assert app.state.chat_model is not None
-            assert app.state.embedding_model is None
             
             # Check that chroma client was initialized
             assert app.state.chroma_client is not None

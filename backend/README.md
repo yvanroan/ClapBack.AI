@@ -41,7 +41,7 @@ backend/
 │   │   ├── pipeline_start.py
 │   │   ├── transcript_to_vector_db.py
 │   │   └── url_to_transcript.py
-├── data/                     # Data storage
+├── data/                     # Data storage(will be moved to s3)
 │   ├── prompts/              # Store prompt templates
 │   │   └── prompts.py        # Prompt templates 
 │   ├── archetypes.json       # Configuration files 

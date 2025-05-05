@@ -32,7 +32,7 @@ from backend.app.services.assessments import (
 # Import and expose vector store services
 from backend.app.services.vector_store import (
     initialize_embedding_model,
-    initialize_chroma_client,
+    initialize_qdrant_client,
     get_or_create_collection,
     generate_embedding,
     store_document,
@@ -66,7 +66,7 @@ __all__ = [
     
     # Vector store services
     'initialize_embedding_model',
-    'initialize_chroma_client',
+    'initialize_qdrant_client',
     'get_or_create_collection',
     'generate_embedding',
     'store_document',

@@ -30,23 +30,23 @@ async def lifespan(app: FastAPI):
     
     # Initialize embedding model and vector database
     try:
-        from backend.app.services.vector_store import initialize_chroma_client, get_or_create_collection
+        from backend.app.services.vector_store import initialize_qdrant_client, get_or_create_collection
         
-        print("Initializing ChromaDB Client...")
-        app.state.chroma_client = initialize_chroma_client()
+        print("Initializing Qdrant Client...")
+        app.state.qdrant_client = initialize_qdrant_client()
         
-        print("Getting or Creating Collection...")
-        app.state.chroma_collection = get_or_create_collection(app.state.chroma_client)
-        
-        if app.state.chroma_collection:
-            print("Vector Database Services Initialized Successfully.")
+        if app.state.qdrant_client:
+            print("Initializing Qdrant Collection...")
+            app.state.collection_name = get_or_create_collection(app.state.qdrant_client)
+            print(f"Qdrant initialization complete: {app.state.collection_name}")
         else:
-            print("WARNING: Vector database services not fully initialized.")
+            print("Warning: Failed to initialize Qdrant client")
+            app.state.qdrant_client = None
+            app.state.collection_name = None
     except Exception as e:
-        print(f"ERROR: Failed to initialize Vector Database Services: {e}")
-        app.state.embedding_model = None
-        app.state.chroma_client = None
-        app.state.chroma_collection = None
+        print(f"Error during Qdrant initialization: {e}")
+        app.state.qdrant_client = None
+        app.state.collection_name = None
     
     yield
     
@@ -54,19 +54,19 @@ async def lifespan(app: FastAPI):
     print("--- Application Shutting Down: Cleaning Up Resources ---")
     # Clean up resources if needed
     app.state.chat_model = None
-    app.state.embedding_model = None
     
-    # Close chroma client if it exists
-    if hasattr(app.state, "chroma_client") and app.state.chroma_client:
+    # Close qdrant client if it exists
+    if hasattr(app.state, "qdrant_client") and app.state.qdrant_client:
         try:
-            # Proper way to close depends on your implementation
-            # app.state.chroma_client.close()
-            pass
+            # Nothing to close for Qdrant HTTP client
+            app.state.qdrant_client = None
+            app.state.collection_name = None
+            print("Qdrant resources cleaned up.")
         except Exception as e:
-            print(f"Error closing chroma client: {e}")
+            print(f"Error closing Qdrant client: {e}")
     
-    app.state.chroma_client = None
-    app.state.chroma_collection = None
+    app.state.qdrant_client = None
+    app.state.collection_name = None
 
 
 def create_application() -> FastAPI:

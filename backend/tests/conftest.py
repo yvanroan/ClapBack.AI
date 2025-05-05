@@ -2,24 +2,23 @@
 Pytest configuration and fixtures.
 """
 import pytest
+import os
 from fastapi.testclient import TestClient
+from fastapi import FastAPI
+from unittest.mock import MagicMock, patch, AsyncMock
 from backend.app import create_application
 from backend.tests import SAMPLE_SCENARIO, SAMPLE_MESSAGES
-from unittest.mock import MagicMock, AsyncMock
 
 @pytest.fixture(scope="session")
 def app():
-    """
-    Fixture to create the FastAPI application instance once per session.
-    Adds a mock chat_model to the app state for testing purposes.
-    """
+    # Create a test instance of the app
     application = create_application()
     # --- Add a mock model to the state for tests ---
     application.state.chat_model = AsyncMock() # Add a simple mock
-    # If your code also checks for embedding_model/chroma_collection in the chat route:
-    application.state.embedding_model = MagicMock()
-    application.state.chroma_collection = MagicMock()
-    # --- End state modification ---
+
+    application.state.qdrant_client = MagicMock()
+    application.state.collection_name = "test_collection"
+    
     return application
 
 @pytest.fixture

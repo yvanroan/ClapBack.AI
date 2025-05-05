@@ -3,10 +3,8 @@ Tests for the API endpoints.
 """
 import pytest
 from fastapi import status
-from backend.app.api.models.schema import ScenarioIDResponse
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, MagicMock, AsyncMock
 from backend.app.services.scenarios import create_scenario, scenarios_db, add_conversation_message
-import asyncio
 
 def test_create_scenario_endpoint(client, sample_scenario_data):
     """Test the endpoint for creating a scenario."""
@@ -61,7 +59,6 @@ def test_chat_endpoint(mock_process_chat: AsyncMock, client, sample_scenario_dat
     # First create a scenario
     scenario_id = create_scenario(sample_scenario_data)
     assert scenario_id in scenarios_db, f"Scenario {scenario_id} NOT found in scenarios_db immediately after creation!"
-    client.app.state.embedding_model = None
     client.app.state.chroma_client = None
 
     # Define the mock return value BEFORE making the API call
@@ -169,4 +166,4 @@ def test_assessment_nonexistent_scenario(client):
     response = client.post(f"/api/v1/conversation/{nonexistent_id}/assess")
     
     # Should handle missing scenarios appropriately
-    assert response.status_code == status.HTTP_404_NOT_FOUND 
+    assert response.status_code == status.HTTP_404_NOT_FOUND

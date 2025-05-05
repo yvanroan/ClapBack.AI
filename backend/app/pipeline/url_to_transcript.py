@@ -53,7 +53,7 @@ def progress_hook(d):
 def download_audio(url, parent_dir=data_dir):
     audio_folder = os.path.join(parent_dir, 'audio')
     os.makedirs(audio_folder, exist_ok=True)
-    # os.makedirs(output_dir, exist_ok=True)
+    
     ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': f'{audio_folder}/%(id)s.%(ext)s',
@@ -85,7 +85,7 @@ def transcribe_youtube_audio(url, parent_dir = data_dir):
     whisper_transcript_folder = os.path.join(parent_dir, 'whisper_transcript')
     os.makedirs(whisper_transcript_folder, exist_ok=True)
 
-    whisper_output_name = audio_name.replace('.wav', '_whisper_transcription.json')
+    whisper_output_name = audio_name.replace('.wav', '.json')
 
     whisper_output_path = os.path.join(whisper_transcript_folder, whisper_output_name)
 
@@ -137,10 +137,10 @@ def transcribe_youtube_audio(url, parent_dir = data_dir):
 
     print("done with speaker output lines")
 
-    speaker_transcript_folder = os.path.join(parent_dir, 'speaker_transcript_folder')
+    speaker_transcript_folder = os.path.join(parent_dir, 'speaker_transcript')
     os.makedirs(whisper_transcript_folder, exist_ok=True)
 
-    speaker_output_name = audio_name.replace('.wav', '_with_speakers.txt')
+    speaker_output_name = audio_name.replace('.wav', '.txt')
 
     speaker_output_path = os.path.join(speaker_transcript_folder, speaker_output_name)
 

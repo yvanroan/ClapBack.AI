@@ -130,7 +130,7 @@ def run_pipeline_interactive():
             confirmation = input(f"{Fore.WHITE}> {Style.RESET_ALL}").strip().lower()
             
             if confirmation not in ['y', 'Y','yes']:
-                print(f"\n{Fore.GREEN}{Style.BRIGHT} Good Call!  Feel free to change your _with_speakers.txt file to match the actual audio {Style.RESET_ALL}")
+                print(f"\n{Fore.GREEN}{Style.BRIGHT} Good Call!  Feel free to change your .txt under speaker_transcript folder file to match the actual audio {Style.RESET_ALL}")
                 print(f"\n{Fore.GREEN}{Style.BRIGHT}Just reuse the url after you've made sure everything is fine and we'll pickup from here! {Style.RESET_ALL}")
                 return
         

@@ -1,6 +1,7 @@
 import os
 import json
-import chromadb
+import qdrant_client
+from qdrant_client.http import models
 from typing import List, Dict, Any, Optional
 import google.generativeai as genai
 from backend.app.core import settings, get_api_key_or_raise
@@ -16,31 +17,51 @@ def initialize_embedding_model():
         print(f"Error initializing embedding model: {e}")
         return None
 
-def initialize_chroma_client():
-    """Initialize connection to the ChromaDB."""
+def initialize_qdrant_client():
+    """Initialize connection to Qdrant."""
     try:
-        # Ensure the ChromaDB directory exists
-        os.makedirs(settings.CHROMA_DB_DIR, exist_ok=True)
+        # Check if we're using local or cloud Qdrant
+        if settings.QDRANT_URL:
+            client = qdrant_client.QdrantClient(
+                url=settings.QDRANT_URL,
+                api_key=settings.QDRANT_API_KEY
+            )
+        else:
+            print("the qdrant url is wrong")
+            return None
         
-        # Initialize the persistent client
-        client = chromadb.PersistentClient(path=settings.CHROMA_DB_DIR)
         return client
     except Exception as e:
-        print(f"Error initializing ChromaDB client: {e}")
+        print(f"Error initializing Qdrant client: {e}")
         return None
 
 def get_or_create_collection(client, collection_name: str = settings.COLLECTION_NAME):
-    """Get or create a ChromaDB collection."""
+    """Get or create a Qdrant collection."""
     if not client:
-        print("ChromaDB client is not initialized.")
+        print("Qdrant client is not initialized.")
         return None
     
     try:
-        # Get or create the collection
-        collection = client.get_or_create_collection(
-            name=collection_name
-        )
-        return collection
+        # Check if collection exists
+        collections = client.get_collections().collections
+        collection_names = [collection.name for collection in collections]
+        
+        if collection_name not in collection_names:
+            # Create the collection with the appropriate dimension
+            # For Gemini embeddings, typically 768 dimensions
+            vector_size = settings.EMBEDDING_DIMENSION  # Define this in settings (e.g. 768 for Gemini)
+            client.create_collection(
+                collection_name=collection_name,
+                vectors_config=models.VectorParams(
+                    size=vector_size,
+                    distance=models.Distance.COSINE
+                ),
+            )
+            print(f"Created new collection: {collection_name}")
+        else:
+            print(f"Using existing collection: {collection_name}")
+            
+        return collection_name  # Return collection name as Qdrant uses it directly
     except Exception as e:
         print(f"Error getting or creating collection: {e}")
         return None
@@ -68,9 +89,9 @@ def generate_embedding(text: str, model_name: str = settings.EMBEDDING_MODEL_NAM
         print(f"Error generating embedding for text (model: {model_name}): {e}")
         return None
 
-
 def store_document(
-    collection,
+    client,
+    collection_name: str,
     document_id: str,
     text: str,
     metadata: Dict[str, Any]
@@ -79,7 +100,8 @@ def store_document(
     Store a document in the vector database.
     
     Args:
-        collection: The ChromaDB collection
+        client: The Qdrant client
+        collection_name: Name of the collection
         document_id: Unique ID for the document
         text: The text content to embed and store
         metadata: Additional metadata for the document
@@ -92,28 +114,35 @@ def store_document(
             return False
             
         # Add to collection
-        collection.add(
-            ids=[document_id],
-            embeddings=[embedding],
-            documents=[text],
-            metadatas=[metadata]
+        client.upsert(
+            collection_name=collection_name,
+            points=[
+                models.PointStruct(
+                    id=document_id,
+                    vector=embedding,
+                    payload={
+                        "text": text,
+                        **metadata
+                    }
+                )
+            ]
         )
         return True
     except Exception as e:
         print(f"Error storing document: {e}")
         return False
 
-def process_and_store_blocks(input_filepath: str, collection):
+def process_and_store_blocks(input_filepath: str, client, collection_name: str):
     """
-    Loads data, generates embeddings, and stores them in ChromaDB.
+    Loads data, generates embeddings, and stores them in Qdrant.
     
     Args:
         input_filepath: Path to the JSON file containing chunk data
-        collection: ChromaDB collection to store embeddings
-        embedding_model: Optional embedding model for generating embeddings
+        client: Qdrant client to store embeddings
+        collection_name: Name of the Qdrant collection
     """
-    if not collection:
-        print("Error: ChromaDB collection not initialized.")
+    if not client or not collection_name:
+        print("Error: Qdrant client or collection not initialized.")
         return
 
     # 1. Load the tagged data
@@ -137,10 +166,7 @@ def process_and_store_blocks(input_filepath: str, collection):
     print(f"Loaded data for {len(chunk_data)} chunks.")
 
     # Lists for batch insertion
-    batch_embeddings = []
-    batch_metadatas = []
-    batch_ids = []
-    batch_documents = [] # Store original text
+    batch_points = []
     total_blocks_processed = 0
     total_errors = 0
 
@@ -195,7 +221,7 @@ def process_and_store_blocks(input_filepath: str, collection):
             else:
                 print(f"  Warning: Missing or invalid tagging_result for block {unique_doc_id}. Skipping tags.")
 
-            # Remove None values from metadata for ChromaDB compatibility
+            # Remove None values from metadata for Qdrant compatibility
             metadata = {k: v for k, v in metadata.items() if v is not None}
 
             # 3. Generate Embedding
@@ -211,46 +237,46 @@ def process_and_store_blocks(input_filepath: str, collection):
                 continue # Skip adding this block if embedding failed
             
             # Add to batch
-            batch_embeddings.append(embedding)
-            batch_metadatas.append(metadata)
-            batch_ids.append(unique_doc_id)
-            batch_documents.append(text_to_embed)
+            batch_points.append(
+                models.PointStruct(
+                    id=unique_doc_id,
+                    vector=embedding,
+                    payload={
+                        "text": text_to_embed,
+                        **metadata
+                    }
+                )
+            )
             total_blocks_processed += 1
 
-            # 4. Add batch to ChromaDB if size reached
-            if len(batch_ids) >= settings.BATCH_SIZE:
-                print(f"  Adding batch of {len(batch_ids)} items to ChromaDB...")
+            # 4. Add batch to Qdrant if size reached
+            if len(batch_points) >= settings.BATCH_SIZE:
+                print(f"  Adding batch of {len(batch_points)} items to Qdrant...")
                 try:
-                    collection.add(
-                        embeddings=batch_embeddings,
-                        metadatas=batch_metadatas,
-                        documents=batch_documents, # Store the text itself
-                        ids=batch_ids
+                    client.upsert(
+                        collection_name=collection_name,
+                        points=batch_points
                     )
                     print(f"  Batch added successfully.")
-                    # Clear batches
-                    batch_embeddings, batch_metadatas, batch_ids, batch_documents = [], [], [], []
+                    # Clear batch
+                    batch_points = []
                 except Exception as e:
-                    print(f"  Error adding batch to ChromaDB: {e}")
-                    total_errors += len(batch_ids) # Count errors for the whole batch
-                    
-                    batch_embeddings, batch_metadatas, batch_ids, batch_documents = [], [], [], [] 
-                    
+                    print(f"  Error adding batch to Qdrant: {e}")
+                    total_errors += len(batch_points) # Count errors for the whole batch
+                    batch_points = []
 
     # 5. Add any remaining items after the loop
-    if batch_ids:
-        print(f"Adding final batch of {len(batch_ids)} items to ChromaDB...")
+    if batch_points:
+        print(f"Adding final batch of {len(batch_points)} items to Qdrant...")
         try:
-            collection.add(
-                embeddings=batch_embeddings,
-                metadatas=batch_metadatas,
-                documents=batch_documents,
-                ids=batch_ids
+            client.upsert(
+                collection_name=collection_name,
+                points=batch_points
             )
             print(f"Final batch added successfully.")
         except Exception as e:
-            print(f"Error adding final batch to ChromaDB: {e}")
-            total_errors += len(batch_ids)
+            print(f"Error adding final batch to Qdrant: {e}")
+            total_errors += len(batch_points)
 
     print(f"\n--- Embedding and Storage Complete ---")
     print(f"Total blocks processed and attempted to add: {total_blocks_processed}")
@@ -258,7 +284,8 @@ def process_and_store_blocks(input_filepath: str, collection):
 
 
 def retrieve_relevant_examples(
-    collection,
+    client,
+    collection_name: str,
     user_input: str,
     conversation_history: List[Dict[str, str]],
     scenario: Dict[str, Any],
@@ -268,7 +295,8 @@ def retrieve_relevant_examples(
     Retrieve relevant examples from the vector database.
     
     Args:
-        collection: The ChromaDB collection
+        client: The Qdrant client
+        collection_name: Name of the collection
         user_input: The current user input
         conversation_history: The conversation history
         scenario: The scenario data
@@ -277,13 +305,13 @@ def retrieve_relevant_examples(
     Returns:
         Dict with retrieved examples
     """
-    if not collection:
-        print("Error: ChromaDB collection not initialized for retrieval.")
+    if not client or not collection_name:
+        print("Error: Qdrant client or collection not initialized for retrieval.")
         return {
-            "ids": [[]],
-            "distances": [[]],
-            "metadatas": [[]],
-            "documents": [[]]
+            "ids": [],
+            "scores": [],
+            "payloads": [],
+            "documents": []
         }
 
     # 1. Construct combined query text
@@ -296,42 +324,68 @@ def retrieve_relevant_examples(
     if not query_embedding:
         print("Failed to generate query embedding.")
         return {
-            "ids": [[]],
-            "distances": [[]],
-            "metadatas": [[]],
-            "documents": [[]]
+            "ids": [],
+            "scores": [],
+            "payloads": [],
+            "documents": []
         }
     print("Generated query embedding.")
 
-    # 3. Construct ChromaDB metadata filter from scenario
+    # 3. Construct Qdrant metadata filter from scenario
     # Only include filters for keys present in the scenario dict
-    scenario_filters = []
+    filter_conditions = []
     for key, value in scenario.items():
         if value is not None:
-            # Basic equality check for simplicity. Adjust if ranges or other operators are needed.
-            scenario_filters.append({key: {"$eq": value}})
+            # Basic equality check for simplicity
+            filter_conditions.append(
+                models.FieldCondition(
+                    key=key,
+                    match=models.MatchValue(value=value)
+                )
+            )
     
-    where_filter = None
-    if scenario_filters:
-        where_filter = {"$or": scenario_filters}
+    filter_query = None
+    if filter_conditions:
+        filter_query = models.Filter(
+            must=filter_conditions  # All conditions must match (AND)
+            # To use OR logic, use should=filter_conditions instead
+        )
     else:
         print("No scenario filters applied.")
     
-    # 4. Query ChromaDB with embedding and metadata filter
+    # 4. Query Qdrant with embedding and metadata filter
     try:
-        results = collection.query(
-            query_embeddings=[query_embedding],
-            n_results=n_results,
-            where=where_filter,  # Apply the filter here
-            include=["metadatas", "documents", "distances"]  # Include relevant data
+        results = client.search(
+            collection_name=collection_name,
+            query_vector=query_embedding,
+            limit=n_results,
+            query_filter=filter_query,
+            with_payload=True
         )
-        print(f"ChromaDB query successful. Found {len(results.get('ids', [[]])[0])} results.")
-        return results
+        
+        # 5. Format results to match the previous format
+        formatted_results = {
+            "ids": [point.id for point in results],
+            "scores": [point.score for point in results],
+            "payloads": [point.payload for point in results],
+            "documents": [point.payload.get("text", "") for point in results]
+        }
+        
+        print(f"Qdrant query successful. Found {len(formatted_results['ids'])} results.")
+        return formatted_results
     except Exception as e:
-        print(f"Error querying ChromaDB: {e}")
+        print(f"Error querying Qdrant: {e}")
         return {
-            "ids": [[]],
-            "distances": [[]],
-            "metadatas": [[]],
-            "documents": [[]]
-        } 
+            "ids": [],
+            "scores": [],
+            "payloads": [],
+            "documents": []
+        }
+
+# Add these to your settings.py file:
+"""
+# Qdrant settings
+QDRANT_URL = os.getenv("QDRANT_URL", "")  # For cloud instance
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")  # For cloud instance
+EMBEDDING_DIMENSION = 768  # For Gemini embeddings
+"""

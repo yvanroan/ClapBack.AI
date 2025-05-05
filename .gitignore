@@ -40,7 +40,7 @@ backend/data/audio
 backend/data/chroma_db
 backend/data/downloads
 backend/data/prompts/prompts.py
-backend/data/speaker_transcript_folder
+backend/data/speaker_transcript
 backend/data/whisper_transcript
 backend/data/archetypes.json
 backend/data/log_transcript.json
@@ -48,3 +48,5 @@ backend/logs.json
 archetypes.txt
 prompts.txt
 cdk/*
+qdrant.py
+backend/data/upload_to_s3.py

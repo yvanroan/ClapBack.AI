@@ -76,19 +76,17 @@ async def test_empty_vector_database():
     This verifies that the retrieval functions handle empty collections
     gracefully and return appropriate empty results.
     """
-    # Mock collection that returns empty results
-    mock_collection = MagicMock()
-    mock_collection.query.return_value = {
-        "ids": [[]],
-        "distances": [[]],
-        "metadatas": [[]],
-        "documents": [[]]
-    }
+    # Mock Qdrant client 
+    mock_client = MagicMock()
+    
+    # Set up the mock to return empty results for search
+    mock_client.search.return_value = []
     
     # Mock embedding generation
     with patch('backend.app.services.vector_store.generate_embedding', return_value=[0.1] * 10):
         results = retrieve_relevant_examples(
-            collection=mock_collection,
+            client=mock_client,
+            collection_name="test_collection",
             user_input="test query",
             conversation_history=[],
             scenario={"type": "test"},
@@ -98,4 +96,7 @@ async def test_empty_vector_database():
         # Verify that empty results are handled properly
         assert isinstance(results, dict)
         assert "ids" in results
-        assert len(results["ids"][0]) == 0 
+        assert len(results["ids"]) == 0  # Qdrant returns an empty list, not a list with an empty list
+        
+        # Verify that the search method was called with correct parameters
+        mock_client.search.assert_called_once()

@@ -3,7 +3,6 @@ import argparse
 import json
 import time
 import google.generativeai as genai
-import chromadb
 import requests
 from typing import Optional, Dict, List, Any, Tuple
 
@@ -11,7 +10,7 @@ from typing import Optional, Dict, List, Any, Tuple
 from backend.app.pipeline.url_to_transcript import download_audio, transcribe_youtube_audio
 from backend.app.utils.cleaner import clean_gemini_output
 from backend.data.prompts.prompts import tagging_prompt, chunking_prompt
-from backend.app.services.vector_store import initialize_embedding_model, initialize_chroma_client, get_or_create_collection, process_and_store_blocks
+from backend.app.services.vector_store import initialize_embedding_model, initialize_qdrant_client, get_or_create_collection, process_and_store_blocks
 
 
 # --- Configuration ---
@@ -305,15 +304,15 @@ def transcript_to_vectordb_pipeline(transcript_path: str) -> bool:
 
     # Step 4: Initialize ChromaDB and embedding model
     embedding_model = initialize_embedding_model()
-    chroma_client = initialize_chroma_client()
-    collection = get_or_create_collection(chroma_client)
+    qdrant_client = initialize_qdrant_client()
+    collection = get_or_create_collection(qdrant_client)
     
     if not embedding_model or not chroma_client or not collection:
         print("Pipeline failed at step 5: Initializing ChromaDB and embedding model")
         return False
     
     # Step 5: Generate embeddings and store in vector DB
-    success = process_and_store_blocks(tagged_file_path, collection, embedding_model)
+    success = process_and_store_blocks(tagged_file_path, qdrant_client, collection, embedding_model)
     if not success:
         print("Pipeline failed at step 6: Generating embeddings and storing in vector DB")
         return False

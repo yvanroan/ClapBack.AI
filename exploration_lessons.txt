@@ -102,3 +102,10 @@ Back comp is mostlikely back-propagation, using the value after cross-entropy to
 which parameters should be "tweaked" to get closer to the expected output
 
 Backpropagation identifies the culprit and optimization administer the punishment.
+
+
+i just cancelled my cursor subscription and i tried to apply the change of vectordb from
+chromadb to qdrant, i made the changes in the vector clases and asked cursor to 
+propagate the changes in the code and bro was hallucinating hard 😂. had to 
+do all the work myself.
+

@@ -5,14 +5,16 @@ from backend.app.core import settings
 class VectorService:
     """Service for vector database operations."""
     
-    def __init__(self, chroma_collection=None):
+    def __init__(self, qdrant_client=None, collection_name=None):
         """
         Initialize the vector service.
         
         Args:
-            chroma_collection: The ChromaDB collection for retrieval
+            qdrant_client: The Qdrant client for retrieval
+            collection_name: The name of the Qdrant collection
         """
-        self.chroma_collection = chroma_collection
+        self.qdrant_client = qdrant_client
+        self.collection_name = collection_name or settings.COLLECTION_NAME
     
     async def retrieve_relevant_examples(
         self,
@@ -33,7 +35,7 @@ class VectorService:
         Returns:
             Dict with retrieved examples
         """
-        if not self.chroma_collection:
+        if not self.qdrant_client or not self.collection_name:
             print("Vector service resources not available")
             return {}
         
@@ -42,7 +44,8 @@ class VectorService:
             from backend.app.services.vector_store import retrieve_relevant_examples as retrieve_examples
             
             results = retrieve_examples(
-                collection=self.chroma_collection,
+                client=self.qdrant_client,
+                collection_name=self.collection_name,
                 user_input=user_input,
                 conversation_history=conversation_history,
                 scenario=scenario,
@@ -52,4 +55,4 @@ class VectorService:
             return results
         except Exception as e:
             print(f"Error retrieving examples: {e}")
-            return {} 
+            return {}
