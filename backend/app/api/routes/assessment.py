@@ -7,7 +7,7 @@ import os
 from backend.app.api.models.schema import AssessmentResponse
 
 # Import services
-from backend.app.services.scenarios import get_scenario, get_conversation_history
+from backend.app.services.scenarios import get_scenario, get_conversation_history, flush_conversation_to_s3, save_assessment_to_s3
 from backend.app.services.assessments import generate_conversation_assessment
 from backend.app.utils.cleaner import clean_gemini_output
 from backend.app.core import settings
@@ -35,6 +35,8 @@ async def get_conversation_assessment(scenario_id: str, request: Request):
     conversation_history = get_conversation_history(scenario_id)
     if not conversation_history:
         raise HTTPException(status_code=400, detail="Cannot assess an empty conversation.")
+
+    flush_conversation_to_s3(scenario_id)
 
     # 2. Generate assessment using the service
     try:
@@ -69,29 +71,10 @@ async def get_conversation_assessment(scenario_id: str, request: Request):
     # 3. Save assessment to file
     if assessment_result:
         try:
-            # Ensure downloads directory exists
-            os.makedirs(settings.DOWNLOADS_DIR, exist_ok=True)
+            # save to s3
+            save_assessment_to_s3(scenario_id, assessment_result)
             
-            # Construct file path
-            file_path = os.path.join(settings.DOWNLOADS_DIR, f"{scenario_id}.json")
-            
-            # Structure the data to save
-            data_to_save = {
-                "scenario_id": scenario_id,
-                "scenario_details": scenario_data,
-                "conversation_history": conversation_history,
-                "assessment_result": assessment_result
-            }
-            
-            # Write to JSON file
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(data_to_save, f, ensure_ascii=False, indent=2)
-            print(f"Successfully saved conversation data and assessment to {file_path}")
-            
-        except IOError as io_err:
-                print(f"ERROR: Could not write assessment log file to {file_path}: {io_err}")
-                # Log the error, but don't prevent the API from returning the assessment
-        except Exception as save_err:
+       except Exception as err:
             print(f"ERROR: An unexpected error occurred while saving assessment log: {save_err}")
             # Log the error, but don't prevent the API from returning the assessment
 # --- End File Saving Logic ---

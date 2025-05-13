@@ -116,3 +116,10 @@ contact to get the problem solved.
 this is a net plus for society. i've been using tools i didn't even know existed for problems i've been facing for a while
 
 LIFE IS GOOD!!!!!
+
+
+to do :
+Store ScenarioDB to S3,	Save scenario info + history + assessment ref (check)
+store all the steps in the ingestion pipeline of the vector db to s3 (next)
+audio -> transcript -> chunking -> tagging-> vector db
+find a better way to rank output than just embedding similarity

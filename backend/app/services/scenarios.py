@@ -1,6 +1,14 @@
 import uuid
 import time
+import json
+import boto3
 from typing import Dict, List, Any, Optional
+from backend.app.core import settings
+
+
+s3 = boto3.client("s3")
+BUCKET_NAME = settings.aws_bucket_name  
+SCENARIO_PREFIX = "scenario"
 
 # In-memory storage (replace with database in production)
 scenarios_db: Dict[str, Any] = {}
@@ -10,6 +18,9 @@ def generate_scenario_id() -> str:
     timestamp = int(time.time())
     unique_uuid = uuid.uuid4()
     return f"conversation-{timestamp}-{unique_uuid}"
+
+def _s3_key(suffix: str, scenario_id: str) -> str:
+    return f"{SCENARIO_PREFIX}/{scenario_id}_{suffix}.json"
 
 def create_scenario(scenario_data: Dict[str, Any]) -> str:
     """
@@ -24,7 +35,13 @@ def create_scenario(scenario_data: Dict[str, Any]) -> str:
     # Generate ID
     scenario_id = generate_scenario_id()
     
-    
+    s3.put_object(
+        Bucket=BUCKET_NAME,
+        Key=_s3_key("scenarioData", scenario_id),
+        Body=json.dumps(scenario_data),
+        ContentType="application/json"
+    )
+
     # Store in memory (replace with database in production)
     scenarios_db[scenario_id] = {
         "scenario_data": scenario_data,
@@ -86,3 +103,21 @@ def get_conversation_history(scenario_id: str) -> List[Dict[str, Any]]:
         return []
     
     return scenario_container["conversation_history"] 
+
+def flush_conversation_to_s3(scenario_id: str) -> None:
+    history = get_conversation_history(scenario_id)
+    s3.put_object(
+        Bucket=BUCKET_NAME,
+        Key=_s3_key("conversationData", scenario_id),
+        Body=json.dumps(history),
+        ContentType="application/json"
+    )
+    scenarios_db.pop(scenario_id, None)
+
+def save_assessment_to_s3(scenario_id: str, assessment_data: Dict[str, Any]) -> None:
+    s3.put_object(
+        Bucket=BUCKET_NAME,
+        Key=_s3_key("assessmentData", scenario_id),
+        Body=json.dumps(assessment_data),
+        ContentType="application/json"
+    )

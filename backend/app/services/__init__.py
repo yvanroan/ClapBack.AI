@@ -11,7 +11,9 @@ from backend.app.services.scenarios import (
     get_scenario,
     add_conversation_message,
     get_conversation_history,
-    generate_scenario_id
+    generate_scenario_id,
+    flush_conversation_to_s3,
+    save_assessment_to_s3
 )
 
 # Import and expose chat services
